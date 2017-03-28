@@ -10,3 +10,8 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+<<<<<<< HEAD
+=======
+
+ScrapperHockey/.idea/*
+>>>>>>> 0fc5b205b84360cfb249373e2cdc95162662ea0d
