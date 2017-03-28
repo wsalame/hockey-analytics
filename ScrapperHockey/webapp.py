@@ -3,6 +3,7 @@ from lxml import html
 from flask import Flask, json
 from flask import request
 from Models import *
+from RabbitMqPubSub import MessagePublisher
 
 app = Flask(__name__)
 day_cache=dict()
@@ -60,6 +61,7 @@ def parse_scores_of_the_day(page, day, month, year):
 @app.route('/hockey/v1/<int:day>/<int:month>/<int:year>', methods=['GET'])
 def oneDay(day, month, year):
     global cache_miss
+    global publisher
 
     if is_in_cache(day, month, year):
         day_obj = day_cache[('%d%d%d' % (day, month, year))]
@@ -71,8 +73,17 @@ def oneDay(day, month, year):
 
     contains_pretty_print = 'pretty' in request.args
 
+    serialized_json_response = day_obj.serialize
+
+    try:
+        if publisher is not None:
+            publisher.publish(message=json.dumps(serialized_json_response))
+    except Exception as e:
+        print e
+        pass
+
     response = app.response_class(
-        response=json.dumps(day_obj.serialize, indent=(int(request.args.get('pretty')) if contains_pretty_print else None),
+        response=json.dumps(serialized_json_response, indent=(int(request.args.get('pretty')) if contains_pretty_print else None),
                             sort_keys=True),
         status=200,
         mimetype='application/json'
@@ -80,5 +91,10 @@ def oneDay(day, month, year):
     return response
 
 if __name__ == '__main__':
+    queueName='hockeyQueue'
+
+    publisher = MessagePublisher(queueName)
+    publisher.start()
+
     app.debug = True
     app.run(host='', port=8989)
