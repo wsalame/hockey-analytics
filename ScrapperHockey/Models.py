@@ -1,9 +1,9 @@
 
 class Game:
     def __init__(self):
-        self.winner = ''
-        self.loser = ''
-        self.home = ''
+        self.winner_team = ''
+        self.loser_team = ''
+        self.home_team = ''
         self.score_winner = 0
         self.score_loser = 0
         self.is_regulation_time_win = True
@@ -11,9 +11,9 @@ class Game:
     @property
     def serialize(self):
         return {
-            'winner': self.winner,
-            'loser': self.loser,
-            'home': self.home,
+            'winner_team': self.winner_team,
+            'loser_team': self.loser_team,
+            'home_team': self.home_team,
             'score_winner': int(self.score_winner),
             'score_loser': int(self.score_loser),
             'is_regulation_time_win': self.is_regulation_time_win,
