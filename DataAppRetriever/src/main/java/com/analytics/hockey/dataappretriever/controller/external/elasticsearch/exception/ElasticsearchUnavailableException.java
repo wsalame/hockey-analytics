@@ -1,6 +1,8 @@
-package com.analytics.hockey.dataappretriever.elasticsearch;
+package com.analytics.hockey.dataappretriever.controller.external.elasticsearch.exception;
 
-public class ElasticsearchUnavailableException extends Exception {
+import java.io.IOException;
+
+public class ElasticsearchUnavailableException extends IOException {
 	private static final long serialVersionUID = 1L;
 
 	public ElasticsearchUnavailableException(Exception e) {

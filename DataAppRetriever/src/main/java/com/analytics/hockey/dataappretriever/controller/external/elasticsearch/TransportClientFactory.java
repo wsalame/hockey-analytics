@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.elasticsearch;
+package com.analytics.hockey.dataappretriever.controller.external.elasticsearch;
 
 import java.net.InetAddress;
 import java.util.HashMap;
@@ -9,6 +9,8 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.exception.ElasticsearchUnavailableException;
 
 public class TransportClientFactory {
 

@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.elasticsearch;
+package com.analytics.hockey.dataappretriever.controller.external.elasticsearch;
 
 import java.io.IOException;
 
@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
-import com.analytics.hockey.dataappretriever.elasticsearch.model.IsElasticsearchField;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.IsElasticsearchField;
 
 public class ElasticsearchUtils {
 	private static final Logger logger = LogManager.getLogger(ElasticsearchUtils.class);

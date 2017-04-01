@@ -2,20 +2,29 @@ package com.analytics.hockey.dataappretriever.service;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.TimeoutException;
 
-import com.analytics.hockey.dataappretriever.controller.ElasticsearchWriteController;
-import com.analytics.hockey.dataappretriever.main.HockeyScrapperUtils;
-import com.analytics.hockey.dataappretriever.main.RabbitMqConsumer;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.ElasticsearchWriteController;
+import com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper.HockeyScrapper;
+import com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper.HockeyScrapperUtils;
+import com.analytics.hockey.dataappretriever.controller.external.messagebroker.MessageConsumer;
+import com.analytics.hockey.dataappretriever.controller.external.messagebroker.OnMessageConsumption;
 import com.analytics.hockey.dataappretriever.model.Game;
-import com.analytics.hockey.dataappretriever.model.OnMessageConsummation;
-import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.AMQP.BasicProperties;
+import com.analytics.hockey.dataappretriever.service.http.AsyncHttpCallWrapper;
+import com.analytics.hockey.dataappretriever.service.http.HttpVerb;
+import com.google.inject.Inject;
 
 public class InitServices {
 
-	public InitServices() throws Exception {
+	private final ElasticsearchWriteController elasticsearchWriteCtrl;
+	private final MessageConsumer broker ;
+	private final HockeyScrapper hockeyScrapper;
 
+	@Inject
+	public InitServices(ElasticsearchWriteController elasticsearchWriteCtrl, MessageConsumer broker,
+	        HockeyScrapper hockeyScrapper) throws Exception {
+		this.elasticsearchWriteCtrl = elasticsearchWriteCtrl;
+		this.broker = broker;
+		this.hockeyScrapper = hockeyScrapper;
 	}
 
 	Integer day = 10;
@@ -25,34 +34,31 @@ public class InitServices {
 	final String index = year.toString();
 	final String type = day.toString() + month.toString() + year.toString();
 
-	public void init() throws IOException, TimeoutException, InterruptedException {
-
-		ElasticsearchWriteController c = ElasticsearchWriteController.getInstance();
-		c.createIndex(index, false);
+	public void init() throws IOException  {
+		elasticsearchWriteCtrl.createIndex(index, false);
 
 		rb();
 	}
 
-	private void rb() throws IOException, TimeoutException, InterruptedException {
-		RabbitMqConsumer rb = RabbitMqConsumer.getInstance();
+	private void rb() throws IOException{
 
 		String TASK_QUEUE_NAME = "hockeyQueue";
 
-		String uri = "http://localhost:8989/nhl/v1/" + day + "/" + month + "/" + year;
+		String url = "http://localhost:8989/nhl/v1/" + day + "/" + month + "/" + year;
 
-		rb.consume(TASK_QUEUE_NAME, new OnMessageConsummation<Void>() {
+		broker.consume(TASK_QUEUE_NAME, new OnMessageConsumption<Void>() {
 			@Override
-			public Void execute(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body)
-			        throws Exception {
+			public Void execute(byte[] body, Object... args) throws Exception {
 				String message = new String(body, "UTF-8");
-				ElasticsearchWriteController.getInstance().putMappingIfNotExists(index, type);
+				elasticsearchWriteCtrl.putMappingIfNotExists(index, type);
 				for (Game game : HockeyScrapperUtils.unmarshall(message)) {
-					ElasticsearchWriteController.getInstance().insertGame(game, index, type);
+					elasticsearchWriteCtrl.insertGame(game, index, type);
 					System.out.println(Arrays.toString(game.buildDocument().entrySet().toArray()));
 				}
 				return null;
 			}
 		});
-		rb.send(1, uri);
+
+		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
 	}
 }

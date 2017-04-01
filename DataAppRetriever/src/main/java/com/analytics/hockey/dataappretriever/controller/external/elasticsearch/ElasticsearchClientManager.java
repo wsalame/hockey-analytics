@@ -1,13 +1,14 @@
-package com.analytics.hockey.dataappretriever.controller;
+package com.analytics.hockey.dataappretriever.controller.external.elasticsearch;
+
+import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
 
-import com.analytics.hockey.dataappretriever.elasticsearch.ElasticsearchUnavailableException;
-import com.analytics.hockey.dataappretriever.elasticsearch.TransportClientFactory;
+import com.analytics.hockey.dataappretriever.model.IsConnected;
 
-public class ElasticsearchClientManager {
+public class ElasticsearchClientManager implements IsConnected{
 
 	private static final Logger logger = LogManager.getLogger(ElasticsearchClientManager.class);
 
@@ -18,15 +19,21 @@ public class ElasticsearchClientManager {
 
 	private ElasticsearchClientManager() {
 		try {
-			client = new TransportClientFactory(HOST_ADRESS, PORT).build();
-		} catch (ElasticsearchUnavailableException e) {
+			connect();
+		} catch (Exception e) {
 			logger.fatal("Error in initClient", e);
 		} finally {
 			addClientShutDownHook();
 		}
 	}
+	
+	@Override
+	public void connect() throws IOException {
+		client = new TransportClientFactory(HOST_ADRESS, PORT).build();
+	}
 
-	private void addClientShutDownHook() {
+	@Override
+	public void addClientShutDownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {

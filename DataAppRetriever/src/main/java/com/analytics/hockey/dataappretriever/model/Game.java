@@ -4,9 +4,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.analytics.hockey.dataappretriever.elasticsearch.ElasticsearchUtils.FieldDatatype;
-import com.analytics.hockey.dataappretriever.elasticsearch.model.IsElasticsearchField;
-import com.analytics.hockey.dataappretriever.elasticsearch.model.IsElasticsearchIndexable;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.ElasticsearchUtils.FieldDatatype;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.IsElasticsearchField;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.IsElasticsearchIndexable;
 import com.analytics.hockey.dataappretriever.exception.GameUnmarshallException;
 
 public class Game implements IsElasticsearchIndexable {

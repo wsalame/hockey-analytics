@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.main;
+package com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper;
 
 import java.io.IOException;
 import java.util.Calendar;

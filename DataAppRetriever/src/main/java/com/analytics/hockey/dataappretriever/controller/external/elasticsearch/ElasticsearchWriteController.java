@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.controller;
+package com.analytics.hockey.dataappretriever.controller.external.elasticsearch;
 
 import java.io.IOException;
 import java.util.Date;
@@ -18,7 +18,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
-import com.analytics.hockey.dataappretriever.elasticsearch.ElasticsearchUtils;
 import com.analytics.hockey.dataappretriever.model.Game;
 import com.analytics.hockey.dataappretriever.model.Game.GameElasticsearchField;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,26 +25,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.inject.Singleton;
 
+@Singleton
 public class ElasticsearchWriteController {
 
-	private static volatile ElasticsearchWriteController INSTANCE;
 	private final static Logger logger = LogManager.getLogger(ElasticsearchWriteController.class);
 
-	private ElasticsearchWriteController() {
+	public ElasticsearchWriteController() {
 
-	}
-
-	public static ElasticsearchWriteController getInstance() {
-		if (INSTANCE == null) {
-			synchronized (ElasticsearchWriteController.class) {
-				if (INSTANCE == null) {
-					INSTANCE = new ElasticsearchWriteController();
-				}
-			}
-		}
-
-		return INSTANCE;
 	}
 
 	public Client getClient() {

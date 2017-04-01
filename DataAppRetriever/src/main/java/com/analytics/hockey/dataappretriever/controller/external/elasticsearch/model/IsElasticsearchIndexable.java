@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.elasticsearch.model;
+package com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model;
 
 import java.util.Map;
 
