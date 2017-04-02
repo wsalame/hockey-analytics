@@ -56,7 +56,7 @@ if __name__ == '__main__':
     print(' [*] Waiting for messages.')
 
     consumer = MessageSubscriber()
-    consumer.start(queueName='hockeyQueue', callback=callback)
+    consumer.start(queueName='games', callback=callback)
 
 
 

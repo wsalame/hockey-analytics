@@ -86,7 +86,7 @@ def oneDay(day, month, year):
     return response
 
 if __name__ == '__main__':
-    queueName='hockeyQueue'
+    queueName='games'
 
     publisher = MessagePublisher(queueName)
     publisher.start()

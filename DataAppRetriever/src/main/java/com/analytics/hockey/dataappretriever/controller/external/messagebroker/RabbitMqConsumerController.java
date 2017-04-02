@@ -1,12 +1,13 @@
 package com.analytics.hockey.dataappretriever.controller.external.messagebroker;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.analytics.hockey.dataappretriever.main.PropertyLoader;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -20,19 +21,22 @@ import com.rabbitmq.client.Envelope;
 public class RabbitMqConsumerController implements MessageConsumer {
 
 	private final static Logger logger = LogManager.getLogger(RabbitMqConsumerController.class);
-	private final int TIMEOUT_CLOSE_CONNECTION = (int) TimeUnit.SECONDS.toMillis(10);
+	private final int TIMEOUT_CLOSE_CONNECTION;
 
 	private Channel channel;
 	private Connection connection;
 
-	public RabbitMqConsumerController() throws IOException, TimeoutException {
-		connect();
+	@Inject
+	public RabbitMqConsumerController(PropertyLoader propertyLoader) throws IOException, TimeoutException {
+		TIMEOUT_CLOSE_CONNECTION = Integer.valueOf(propertyLoader.getProperty("rmq.timeOutCloseConnection_ms"));
+		String host = propertyLoader.getProperty("rmq.host");
+		connect(host, null);
 	}
 
 	@Override
-	public void connect() throws IOException, TimeoutException {
+	public void connect(String host, Integer port) throws IOException, TimeoutException {
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("localhost");
+		factory.setHost(host);
 
 		try {
 			connection = factory.newConnection();

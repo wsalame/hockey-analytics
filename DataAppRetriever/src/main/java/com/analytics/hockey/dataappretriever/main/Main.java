@@ -10,5 +10,4 @@ public class Main {
 		GuiceInjector.getInstance().install(new AppModule());
 		GuiceInjector.get(InitServices.class).init();
 	}
-
 }

@@ -11,18 +11,20 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
 
 import com.analytics.hockey.dataappretriever.service.http.AsyncHttpCallWrapper;
+import com.google.inject.Singleton;
 
+@Singleton
 public class DefaultHockeyScrapperController implements HockeyScrapper {
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
 	private AsyncHttpClient asyncHttpClient;
 
 	public DefaultHockeyScrapperController() throws IOException, TimeoutException {
-		connect();
+		connect(null, null);
 	}
 
 	@Override
-	public void connect() throws IOException, TimeoutException {
+	public void connect(String host, Integer port) throws IOException, TimeoutException {
 		asyncHttpClient = new DefaultAsyncHttpClient();
 	}
 

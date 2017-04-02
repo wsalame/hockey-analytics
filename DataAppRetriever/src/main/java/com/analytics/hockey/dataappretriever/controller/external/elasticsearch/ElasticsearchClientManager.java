@@ -6,30 +6,34 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
 
+import com.analytics.hockey.dataappretriever.main.DefaultPropertyLoader;
+import com.analytics.hockey.dataappretriever.main.PropertyLoader;
+import com.analytics.hockey.dataappretriever.main.injector.GuiceInjector;
 import com.analytics.hockey.dataappretriever.model.IsConnected;
 
-public class ElasticsearchClientManager implements IsConnected{
+public class ElasticsearchClientManager implements IsConnected {
 
 	private static final Logger logger = LogManager.getLogger(ElasticsearchClientManager.class);
 
-	private final String HOST_ADRESS = "127.0.0.1";
-	private final int PORT = 9300;
 	private static volatile ElasticsearchClientManager INSTANCE;
 	private volatile Client client;
+	private final PropertyLoader propertyLoader = GuiceInjector.get(DefaultPropertyLoader.class);
 
 	private ElasticsearchClientManager() {
 		try {
-			connect();
+			String host = propertyLoader.getProperty("es.host");
+			int port = Integer.valueOf(propertyLoader.getProperty("es.port"));
+			connect(host, port);
 		} catch (Exception e) {
-			logger.fatal("Error in initClient", e);
+			logger.fatal(e, e);
 		} finally {
 			addClientShutDownHook();
 		}
 	}
-	
+
 	@Override
-	public void connect() throws IOException {
-		client = new TransportClientFactory(HOST_ADRESS, PORT).build();
+	public void connect(String host, Integer port) throws IOException {
+		client = new TransportClientFactory(host, port).build();
 	}
 
 	@Override
@@ -42,7 +46,7 @@ public class ElasticsearchClientManager implements IsConnected{
 		});
 	}
 
-	public static ElasticsearchClientManager getInstance() {
+	public static ElasticsearchClientManager getInstance() { // TODO utiliser guice plutot ? Faire une interface ?
 		if (INSTANCE == null) {
 			synchronized (ElasticsearchClientManager.class) {
 				if (INSTANCE == null) {

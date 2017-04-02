@@ -49,8 +49,16 @@ public class ElasticsearchWriteController {
 		if (!res.isExists() || (res.isExists() && deleteOldIndexIfExists)) {
 			XContentBuilder settingsBuilder = null;
 			settingsBuilder = XContentFactory.jsonBuilder().startObject();
+			
+			/**
+			 * Dynamic mapping is disabled to force user to define explicit mapping when creating new type, which, among
+			 * others, will reduce risk of bugs. For example, if we index a list of documents, and the first document
+			 * happens to have a NULL value, ES will decide for us which datatype it is (String, int, etc.). In other
+			 * words, ES could pick the wrong datatype, and subsequent documents will fail indexing.
+			 */
 			settingsBuilder.startObject("index").field("number_of_shards", 1).field("number_of_replicas", 0)
 			        .field("mapper.dynamic", false);
+
 			settingsBuilder.endObject();
 
 			CreateIndexRequestBuilder createIndexRequestBuilder = getClient().admin().indices().prepareCreate(indexName)
@@ -82,10 +90,11 @@ public class ElasticsearchWriteController {
 		        }
 	        });
 
-	private final String SEPARATOR = "/"; //TODO Less ghetto way
+	private final String SEPARATOR = "/"; // TODO Less ghetto way
+
 	public void putMappingIfNotExists(String index, String type) {
 		try {
-			if (!mappingParametersExistsCache.get(index + SEPARATOR+ type)) {
+			if (!mappingParametersExistsCache.get(index + SEPARATOR + type)) {
 				String mapping = ElasticsearchUtils.buildMappingParametersAsJson(GameElasticsearchField.values());
 				getClient().admin().indices().preparePutMapping(index).setType(type).setSource(mapping).execute()
 				        .actionGet(); // We want to wait for the mapping to be added
