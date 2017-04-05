@@ -8,80 +8,102 @@
 	<packaging>jar</packaging>
 
 	<name>DataAppRetriever</name>
-	<url>http://maven.apache.org</url>
+	<url>https://github.com/wsalame/hockey-analytics/</url>
 
 	<properties>
+		<!-- Build -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- For unit tests -->
+		<mockito.version>2.7.21</mockito.version>
+		<junit.version>4.12</junit.version>
+
+		<!-- Main project -->
+		<jackson.version>2.8.7</jackson.version>
+		<elasticsearch.version>2.4.4</elasticsearch.version>
+		<guice.version>4.1.0</guice.version>
+		<guava.version>21.0</guava.version>
+		<sparkjava.version>2.5.5</sparkjava.version>
+		<asyncHttpClient.version>2.0.30</asyncHttpClient.version>
+		<log4j.version>2.8.1</log4j.version>
+		<rabbitmq.version>4.1.0</rabbitmq.version>
 	</properties>
 
 	<dependencies>
+		<!-- For unit tests -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>${mockito.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Main project -->
+		<dependency>
 			<groupId>com.sparkjava</groupId>
 			<artifactId>spark-core</artifactId>
-			<version>2.5.5</version>
+			<version>${sparkjava.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
-			<version>2.4.4</version>
+			<version>${elasticsearch.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>21.0</version>
+			<version>${guava.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.asynchttpclient</groupId>
 			<artifactId>async-http-client</artifactId>
-			<version>2.0.30</version>
+			<version>${asyncHttpClient.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.rabbitmq</groupId>
 			<artifactId>amqp-client</artifactId>
-			<version>4.1.0</version>
+			<version>${rabbitmq.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.8.7</version>
+			<version>${jackson.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.8.7</version>
+			<version>${jackson.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.8.1</version>
+			<version>${log4j.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
-			<version>2.8.1</version>
+			<version>${log4j.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
-			<version>4.1.0</version>
+			<version>${guice.version}</version>
 		</dependency>
-
-
 	</dependencies>
 </project>

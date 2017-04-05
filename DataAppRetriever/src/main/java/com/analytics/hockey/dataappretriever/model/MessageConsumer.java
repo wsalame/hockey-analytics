@@ -1,8 +1,8 @@
-package com.analytics.hockey.dataappretriever.controller.external.messagebroker;
+package com.analytics.hockey.dataappretriever.model;
 
 import java.io.IOException;
 
-import com.analytics.hockey.dataappretriever.model.IsConnected;
+import com.analytics.hockey.dataappretriever.controller.external.messagebroker.RabbitMqConsumerController;
 import com.google.inject.ImplementedBy;
 
 @ImplementedBy(RabbitMqConsumerController.class)

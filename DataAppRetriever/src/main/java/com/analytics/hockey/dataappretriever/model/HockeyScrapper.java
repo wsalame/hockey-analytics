@@ -1,6 +1,6 @@
-package com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper;
+package com.analytics.hockey.dataappretriever.model;
 
-import com.analytics.hockey.dataappretriever.model.IsConnected;
+import com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper.DefaultHockeyScrapperController;
 import com.analytics.hockey.dataappretriever.service.http.AsyncHttpCallWrapper;
 import com.google.inject.ImplementedBy;
 

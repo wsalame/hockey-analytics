@@ -1,8 +1,159 @@
 package com.analytics.hockey.dataappretriever.service;
 
-public class RestService {
+import static spark.Spark.before;
+import static spark.Spark.get;
+import static spark.Spark.halt;
+import static spark.Spark.path;
 
-	public void startService(){
-		// get("/hello", (req, res) -> "Hello World");
+import java.net.HttpURLConnection;
+import java.util.Map;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.analytics.hockey.dataappretriever.exception.JsonException;
+import com.analytics.hockey.dataappretriever.model.DataRetriever;
+import com.analytics.hockey.dataappretriever.model.ExposedApiService;
+import com.analytics.hockey.dataappretriever.model.JsonFormatter;
+import com.analytics.hockey.dataappretriever.model.PropertyLoader;
+import com.google.inject.Inject;
+
+import spark.Request;
+import spark.Route;
+import spark.Spark;
+
+public class RestService implements ExposedApiService {
+	private final Logger logger = LogManager.getLogger(this.getClass());
+
+	private DataRetriever dataRetriever;
+	private JsonFormatter jsonFormatter;
+	private PropertyLoader propertyLoader;
+
+	private final String MALFORMED_REQUEST_OUPUT = "Error. Have you malformed your request ?";
+
+	@Inject
+	public RestService(DataRetriever dataRetriever, JsonFormatter jsonFormatter, PropertyLoader propertyLoader) {
+		this.dataRetriever = dataRetriever;
+		this.jsonFormatter = jsonFormatter;
+	}
+
+	@Override
+	public void start() {
+		Spark.ipAddress(propertyLoader.getProperty("spark.host").intern());
+		Spark.port(propertyLoader.getPropertyAsInteger("spark.port"));
+
+		// TODO use websockets ?
+
+		initFaviconIcon();
+
+		initBefore();
+
+		path("/api/v1/nhl", () -> {
+			initBeforeNhl();
+
+			get("/:season", (request, response) -> {
+				try {
+					response.status(200);
+					response.type("application/json");
+
+					String api = "/api/v1/nhl/2005/teams";
+
+					return api;
+				} catch (Exception e) {
+					logger.error(e.toString(), e);
+					response.status(HttpURLConnection.HTTP_BAD_REQUEST);
+					return MALFORMED_REQUEST_OUPUT;
+				}
+			});
+
+			initSeasonPath();
+		});
+	}
+
+	@Override
+	public void addClientShutDownHook() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Spark.stop();
+			}
+		});
+	}
+
+	@Override
+	public void awaitInitialization() {
+		Spark.awaitInitialization();
+		System.out.println("Spark is ready on localhost:" + Spark.port());
+	}
+
+	private void initFaviconIcon() {
+		get("/favicon.ico", (request, response) -> {
+			return "";
+		});
+	}
+
+	Route nhlTeamsBySeasonRoute = (request, response) -> {
+		try {
+			String teamNames = getTeamNames(Integer.valueOf(request.params(":season")));
+			response.status(200);
+			response.type("application/json");
+
+			return outputPrettyIfNecessary(request, teamNames);
+		} catch (Exception e) {
+			logger.error(e.toString(), e);
+			response.status(HttpURLConnection.HTTP_BAD_REQUEST);
+			return MALFORMED_REQUEST_OUPUT;
+		}
+	};
+
+	private void initSeasonPath() {
+		/*
+		 * /api/v1/nhl/:season
+		 */
+		path("/:season", () -> {
+			/*
+			 * /api/v1/nhl/:season/teams
+			 */
+			get("/teams", nhlTeamsBySeasonRoute);
+		});
+	}
+
+	private void initBefore() {
+		before("/*", (req, res) -> {
+			logger.info("Requested route : " + req.pathInfo());
+		});
+	}
+
+	private void initBeforeNhl() {
+		/*
+		 * /api/v1/nhl/
+		 */
+		before("/*", (req, res) -> {
+			boolean authenticated = true;
+			if (!authenticated) {
+				halt(401, "Please connect"); // TODO redirect to login page
+			}
+		});
+	}
+
+	private String outputPrettyIfNecessary(Request request, String output) throws JsonException {
+		return request.queryParams("pretty") == null ? output : jsonFormatter.toPrettyJson(output, 2);
+	}
+
+	@Override
+	public String getTeamNames(int season) throws Exception {
+		return dataRetriever.getTeamNames(season);
+	}
+
+	@Override
+	public String getTotalGoals(int season, String team, Map<String, Object> params) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getTotalPoints(int season, String team, Map<String, Object> params) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

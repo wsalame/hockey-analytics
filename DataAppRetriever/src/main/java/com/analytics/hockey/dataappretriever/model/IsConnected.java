@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 public interface IsConnected {
-	void connect(String host, Integer port) throws IOException, TimeoutException;
-
 	void addClientShutDownHook();
+	
+	void awaitInitialization();
+	
+	void start() throws IOException, TimeoutException;
 }

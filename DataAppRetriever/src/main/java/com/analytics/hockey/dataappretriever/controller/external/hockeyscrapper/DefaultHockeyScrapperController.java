@@ -10,6 +10,7 @@ import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
 
+import com.analytics.hockey.dataappretriever.model.HockeyScrapper;
 import com.analytics.hockey.dataappretriever.service.http.AsyncHttpCallWrapper;
 import com.google.inject.Singleton;
 
@@ -19,29 +20,33 @@ public class DefaultHockeyScrapperController implements HockeyScrapper {
 
 	private AsyncHttpClient asyncHttpClient;
 
-	public DefaultHockeyScrapperController() throws IOException, TimeoutException {
-		connect(null, null);
+	public DefaultHockeyScrapperController() {
+
 	}
 
 	@Override
-	public void connect(String host, Integer port) throws IOException, TimeoutException {
-		asyncHttpClient = new DefaultAsyncHttpClient();
+	public synchronized void start() throws IOException, TimeoutException {
+		if (asyncHttpClient == null) {
+			asyncHttpClient = new DefaultAsyncHttpClient();
+			addClientShutDownHook(); //TODO mauvais endroit ?
+		}
+	}
+
+	@Override
+	public void awaitInitialization() {
 	}
 
 	@Override
 	public void addClientShutDownHook() {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				try {
-					if (!asyncHttpClient.isClosed()) {
-						asyncHttpClient.close();
-					}
-				} catch (IOException e) {
-					logger.error(e, e);
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				if (!asyncHttpClient.isClosed()) {
+					asyncHttpClient.close();
 				}
+			} catch (IOException e) {
+				logger.error(e, e);
 			}
-		});
+		}));
 	}
 
 	@Override

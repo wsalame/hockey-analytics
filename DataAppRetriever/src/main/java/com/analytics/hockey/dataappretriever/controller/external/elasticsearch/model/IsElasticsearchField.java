@@ -1,9 +1,9 @@
 package com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model;
 
-import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.ElasticsearchUtils.FieldDatatype;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.FieldDatatype;
 
 public interface IsElasticsearchField<T> {
-	Object getValue(T o);
+	Object getIndexingValue(T o);
 	
 	FieldDatatype getFieldDatatype();
 	
