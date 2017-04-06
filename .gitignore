@@ -20,3 +20,4 @@ log.txt
 #Python ScrapperHockey
 ScrapperHockey/.idea/*
 *.pyc
+/target/
