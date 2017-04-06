@@ -1,4 +1,4 @@
-package com.analytics.hockey.DataAppRetriever;
+package com.analytics.hockey.dataappretriever;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

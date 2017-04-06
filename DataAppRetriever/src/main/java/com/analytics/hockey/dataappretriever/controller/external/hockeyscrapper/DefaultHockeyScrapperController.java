@@ -1,47 +1,48 @@
 package com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.asynchttpclient.AsyncCompletionHandler;
 import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
 
 import com.analytics.hockey.dataappretriever.model.HockeyScrapper;
 import com.analytics.hockey.dataappretriever.service.http.AsyncHttpCallWrapper;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class DefaultHockeyScrapperController implements HockeyScrapper {
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
-	private AsyncHttpClient asyncHttpClient;
+	private AsyncHttpClient client; // TODO should be binded to more generic client
 
-	public DefaultHockeyScrapperController() {
-
+	@Inject
+	public DefaultHockeyScrapperController(AsyncHttpClient client) {
+		this.client = client;
 	}
 
 	@Override
-	public synchronized void start() throws IOException, TimeoutException {
-		if (asyncHttpClient == null) {
-			asyncHttpClient = new DefaultAsyncHttpClient();
-			addClientShutDownHook(); //TODO mauvais endroit ?
-		}
+	public synchronized void start() {
+		// This might look like it does not make sense to put in here, but it's consistent
+		// with the rest of the IsConnected implementations, where we had to explicitly
+		// had to start a connection in IsConnect#start()
+		addClientShutDownHook();
 	}
 
 	@Override
 	public void awaitInitialization() {
+		// client.
 	}
 
 	@Override
 	public void addClientShutDownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			try {
-				if (!asyncHttpClient.isClosed()) {
-					asyncHttpClient.close();
+				if (!client.isClosed()) {
+					client.close();
 				}
 			} catch (IOException e) {
 				logger.error(e, e);
@@ -52,7 +53,7 @@ public class DefaultHockeyScrapperController implements HockeyScrapper {
 	@Override
 	public void sendHttpRequest(AsyncHttpCallWrapper call) {
 		try {
-			call.getVerb().prepare(asyncHttpClient, call.getUrl()).execute(new AsyncCompletionHandler<Void>() {
+			call.getVerb().prepare(client, call.getUrl()).execute(new AsyncCompletionHandler<Void>() {
 				@Override
 				public Void onCompleted(Response response) throws Exception {
 					return null;

@@ -35,6 +35,7 @@ public class RestService implements ExposedApiService {
 	public RestService(DataRetriever dataRetriever, JsonFormatter jsonFormatter, PropertyLoader propertyLoader) {
 		this.dataRetriever = dataRetriever;
 		this.jsonFormatter = jsonFormatter;
+		this.propertyLoader = propertyLoader;
 	}
 
 	@Override
