@@ -12,12 +12,15 @@
 hs_err_pid*
 
 
-####DataAppRetriever
-DataAppRetriever/target
-DataAppRetriever/.settings
+# Eclipse
+.settings
+.classpath
+.project
 
 log.txt
 #Python ScrapperHockey
 ScrapperHockey/.idea/*
 *.pyc
+
+
 /target/
