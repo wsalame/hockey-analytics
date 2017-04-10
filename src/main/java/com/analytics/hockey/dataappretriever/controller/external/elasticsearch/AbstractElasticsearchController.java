@@ -3,7 +3,6 @@ package com.analytics.hockey.dataappretriever.controller.external.elasticsearch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
 
 import com.analytics.hockey.dataappretriever.main.injector.GuiceInjector;
 import com.analytics.hockey.dataappretriever.model.IsConnected;
@@ -17,6 +16,9 @@ public abstract class AbstractElasticsearchController implements IsConnected {
 	private Client client;
 	private final PropertyLoader propertyLoader = GuiceInjector.get(DefaultPropertyLoader.class);
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public void awaitInitialization() {
 		client.admin().cluster().prepareClusterStats().execute().actionGet(); // TODO
@@ -24,8 +26,11 @@ public abstract class AbstractElasticsearchController implements IsConnected {
 		                                                                      // to green
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public synchronized void start() { // TODO a voir si on garde ici
+	public synchronized void start() { // TODO a voir si on garde ici dans le abstract
 		if (client == null) {
 			try {
 				String host = propertyLoader.getProperty("es.host").intern();
@@ -39,6 +44,9 @@ public abstract class AbstractElasticsearchController implements IsConnected {
 		}
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public void addClientShutDownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -46,7 +54,7 @@ public abstract class AbstractElasticsearchController implements IsConnected {
 		}));
 	}
 
-	protected TransportClient  getClient() {
-		return (TransportClient) client;
+	protected Client getClient() {
+		return client;
 	}
 }

@@ -18,9 +18,9 @@ import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.aggregations.metrics.sum.InternalSum;
 
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.exception.ElasticsearchRetrieveException;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.GameElasticsearchField;
 import com.analytics.hockey.dataappretriever.exception.JsonException;
 import com.analytics.hockey.dataappretriever.model.DataRetriever;
-import com.analytics.hockey.dataappretriever.model.GameElasticsearchField;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
 
@@ -34,14 +34,17 @@ public class ElasticsearchReadController extends AbstractElasticsearchController
 
 	// TODO faire que un ca throw un truc plus generique. faire une nouvelle exception
 	// DataReadStoreException ou qqch, dont ESRetrieveException va heriter
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public String getTeamNames(int season) throws ElasticsearchRetrieveException {
+	public String getTeamNames(String season) throws ElasticsearchRetrieveException {
 		QueryBuilder qb = QueryBuilders.matchAllQuery();
 
 		TermsBuilder agg = AggregationBuilders.terms("unique_teams").size(NUMBER_OF_TEAMS)
-		        .field(GameElasticsearchField.HOME_TEAM.getJson());
+		        .field(GameElasticsearchField.HOME_TEAM.getJsonFieldName());
 
-		SearchRequestBuilder fullQuery = getClient().prepareSearch(String.valueOf(season)).addAggregation(agg)
+		SearchRequestBuilder fullQuery = getClient().prepareSearch(season).addAggregation(agg)
 		        .setQuery(qb).setSize(0);
 
 		SearchResponse searchResponse = executeActionGet(fullQuery);
@@ -79,8 +82,11 @@ public class ElasticsearchReadController extends AbstractElasticsearchController
 		}
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public String getScores(int season, int day, int month, int year) {
+	public String getScores(int day, int month, int year) {
 		final String index = String.valueOf(year);
 		final String type = String.valueOf(day) + String.valueOf(month) + String.valueOf(year);
 
@@ -108,11 +114,14 @@ public class ElasticsearchReadController extends AbstractElasticsearchController
 		return sb.toString();
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	// TODO good edge case season 2005 de 1 oct a 15 oct pour Nashville. ca doit donner
 	// 20, mais ca donnais 16 a cause que le endDate etait considere comme less au lieu de
 	// less than equal. Probleme du a une mauvaise indexation ?
 	@Override
-	public String getTotalGoals(int season, String team, Long startEpochMillis, Long endEpochMillis)
+	public String getTotalGoals(String season, String team, Long startEpochMillis, Long endEpochMillis)
 	        throws ElasticsearchRetrieveException {
 		String totalGoalsFieldName = "totalGoals";
 		String winnerGoalsAggName = "winnerGoalsAgg";
@@ -120,8 +129,8 @@ public class ElasticsearchReadController extends AbstractElasticsearchController
 
 		BoolQueryBuilder qb = QueryBuilders.boolQuery()
 		        .filter(QueryBuilders.boolQuery()
-		                .should(QueryBuilders.termQuery(GameElasticsearchField.WINNER_TEAM.getJson(), team))
-		                .should(QueryBuilders.termQuery(GameElasticsearchField.LOSER_TEAM.getJson(), team)));
+		                .should(QueryBuilders.termQuery(GameElasticsearchField.WINNER_TEAM.getJsonFieldName(), team))
+		                .should(QueryBuilders.termQuery(GameElasticsearchField.LOSER_TEAM.getJsonFieldName(), team)));
 
 		if (startEpochMillis != null || endEpochMillis != null) {
 			RangeQueryBuilder rqb = QueryBuilders.rangeQuery("date");
@@ -137,14 +146,14 @@ public class ElasticsearchReadController extends AbstractElasticsearchController
 		}
 
 		FilterAggregationBuilder winnerGoalsAggBuilder = AggregationBuilders.filter(winnerGoalsAggName)
-		        .filter(QueryBuilders.termQuery(GameElasticsearchField.WINNER_TEAM.getJson(), team))
+		        .filter(QueryBuilders.termQuery(GameElasticsearchField.WINNER_TEAM.getJsonFieldName(), team))
 		        .subAggregation(AggregationBuilders.sum(totalGoalsFieldName)
-		                .field(GameElasticsearchField.SCORE_WINNER.getJson()));
+		                .field(GameElasticsearchField.SCORE_WINNER.getJsonFieldName()));
 
 		FilterAggregationBuilder loserGoalsAggBuilder = AggregationBuilders.filter(loserGoalAggName)
-		        .filter(QueryBuilders.termQuery(GameElasticsearchField.LOSER_TEAM.getJson(), team))
+		        .filter(QueryBuilders.termQuery(GameElasticsearchField.LOSER_TEAM.getJsonFieldName(), team))
 		        .subAggregation(AggregationBuilders.sum(totalGoalsFieldName)
-		                .field(GameElasticsearchField.SCORE_LOSER.getJson()));
+		                .field(GameElasticsearchField.SCORE_LOSER.getJsonFieldName()));
 
 		SearchRequestBuilder fullQuery = getClient().prepareSearch(String.valueOf(season))
 		        .addAggregation(winnerGoalsAggBuilder).addAggregation(loserGoalsAggBuilder).setQuery(qb).setSize(0);
@@ -160,8 +169,11 @@ public class ElasticsearchReadController extends AbstractElasticsearchController
 		return null;
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public String getTotalGoals(int season, String team) throws ElasticsearchRetrieveException {
+	public String getTotalGoals(String season, String team) throws ElasticsearchRetrieveException {
 		return getTotalGoals(season, team, null, null);
 	}
 

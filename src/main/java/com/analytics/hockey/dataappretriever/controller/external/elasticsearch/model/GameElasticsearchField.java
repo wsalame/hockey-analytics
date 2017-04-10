@@ -1,11 +1,11 @@
-package com.analytics.hockey.dataappretriever.model;
+package com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.FieldDatatype;
-import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.IsElasticsearchField;
+import com.analytics.hockey.dataappretriever.model.Game;
 
 public enum GameElasticsearchField implements IsElasticsearchField<Game> {
     // TODO add
@@ -24,8 +24,9 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
+		public
 		void setValue(Game game, Object o) {
-			game.winnerTeam = (String) o;
+			game.setWinnerTeam((String) o);
 		}
 
 	},
@@ -36,8 +37,8 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
-		void setValue(Game game, Object o) {
-			game.loserTeam = (String) o;
+		public void setValue(Game game, Object o) {
+			game.setLoserTeam((String) o);
 		}
 	},
 	HOME_TEAM("home_team", FieldDatatype.RAW_STRING) {
@@ -47,8 +48,8 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
-		void setValue(Game game, Object o) {
-			game.homeTeam = (String) o;
+		public void setValue(Game game, Object o) {
+			game.setHomeTeam((String) o);
 		}
 
 	},
@@ -59,8 +60,8 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
-		void setValue(Game game, Object o) {
-			game.scoreWinner = (short) (int) o;
+		public void setValue(Game game, Object o) {
+			game.setScoreWinner((short) (int) o);
 		}
 
 	},
@@ -71,8 +72,8 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
-		void setValue(Game game, Object o) {
-			game.scoreLoser = (short) (int) o;
+		public void setValue(Game game, Object o) {
+			game.setScoreLoser((short) (int) o);
 		}
 
 	},
@@ -83,8 +84,8 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
-		void setValue(Game game, Object o) {
-			game.isRegulatimeTimeWin = (boolean) o;
+		public void setValue(Game game, Object o) {
+			game.setRegulatimeTimeWin((boolean) o);
 		}
 
 	},
@@ -99,29 +100,30 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
-		void setValue(Game game, Object o) throws Exception {
+		public void setValue(Game game, Object o) throws Exception {
+			//TODO
 		}
 	};
 
-	private final String json;
+	private final String jsonFieldName;
 	private final FieldDatatype fieldDatatype;
 	private static Map<String, GameElasticsearchField> valuesByJsonMap = new HashMap<>();
 	static {
 		for (GameElasticsearchField field : GameElasticsearchField.values()) {
-			valuesByJsonMap.put(field.getJson(), field);
+			valuesByJsonMap.put(field.getJsonFieldName(), field);
 		}
 	}
 
-	private GameElasticsearchField(String json, FieldDatatype fieldDatatype) {
-		this.json = json;
+	private GameElasticsearchField(String jsonFieldName, FieldDatatype fieldDatatype) {
+		this.jsonFieldName = jsonFieldName;
 		this.fieldDatatype = fieldDatatype;
 	}
 
-	abstract void setValue(Game game, Object o) throws Exception;
+	public abstract void setValue(Game game, Object o) throws Exception;
 
 	@Override
-	public String getJson() {
-		return json;
+	public String getJsonFieldName() {
+		return jsonFieldName;
 	}
 
 	@Override

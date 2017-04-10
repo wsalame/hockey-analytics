@@ -1,10 +1,14 @@
 package com.analytics.hockey.dataappretriever.service;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,10 +18,11 @@ import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.ElasticsearchWriteController;
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.exception.ElasticsearchRetrieveException;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.TeamElasticsearchField;
 import com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper.HockeyScrapperUtils;
 import com.analytics.hockey.dataappretriever.main.injector.GuiceInjector;
+import com.analytics.hockey.dataappretriever.model.DataIndexer;
 import com.analytics.hockey.dataappretriever.model.DataRetriever;
 import com.analytics.hockey.dataappretriever.model.ExposedApiService;
 import com.analytics.hockey.dataappretriever.model.Game;
@@ -26,6 +31,7 @@ import com.analytics.hockey.dataappretriever.model.IsConnected;
 import com.analytics.hockey.dataappretriever.model.MessageConsumer;
 import com.analytics.hockey.dataappretriever.model.OnMessageConsumption;
 import com.analytics.hockey.dataappretriever.model.PropertyLoader;
+import com.analytics.hockey.dataappretriever.model.Team;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -33,25 +39,24 @@ public class InitServices {
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
 	private final DataRetriever dataRetriever;
-	private final ElasticsearchWriteController elasticsearchWriteCtrl;
 	private final MessageConsumer messageConsumer;
 	private final HockeyScrapper hockeyScrapper;
 	private final ExposedApiService exposedApiService;
+	private final DataIndexer dataIndexer;
 
 	@Inject
-	public InitServices(DataRetriever dataRetriever, ElasticsearchWriteController elasticsearchWriteCtrl,
-	        MessageConsumer messageConsumer, HockeyScrapper hockeyScrapper, ExposedApiService exposedApiService)
-	        throws Exception {
+	public InitServices(DataRetriever dataRetriever, MessageConsumer messageConsumer, HockeyScrapper hockeyScrapper,
+	        ExposedApiService exposedApiService, DataIndexer dataIndexer) throws Exception {
 		this.dataRetriever = dataRetriever;
-		this.elasticsearchWriteCtrl = elasticsearchWriteCtrl;
 		this.messageConsumer = messageConsumer;
 		this.hockeyScrapper = hockeyScrapper;
 		this.exposedApiService = exposedApiService;
+		this.dataIndexer = dataIndexer;
 	}
 
 	public void startServices() throws IOException, ElasticsearchRetrieveException, ExecutionException {
-		List<IsConnected> services = Lists.newArrayList(this.dataRetriever, this.elasticsearchWriteCtrl,
-		        this.messageConsumer, this.hockeyScrapper);
+		List<IsConnected> services = Lists.newArrayList(this.dataRetriever, this.dataIndexer, this.messageConsumer,
+		        this.hockeyScrapper);
 
 		List<IsConnected> failedServices = Collections.synchronizedList(new ArrayList<IsConnected>());
 		ExecutorService executor = Executors.newFixedThreadPool(Math.min(4, services.size()));
@@ -74,10 +79,12 @@ public class InitServices {
 			boolean allFinished = executor.awaitTermination(15, TimeUnit.SECONDS) && failedServices.isEmpty();
 
 			if (allFinished) {
-				rb();
+				initConsummation();
+
 				this.exposedApiService.start();
-				System.out.println("Starting API....");
+				logger.info("Starting API....");
 				this.exposedApiService.awaitInitialization();
+
 			} else {
 				throwCouldNotStartServices(failedServices);
 			}
@@ -87,39 +94,114 @@ public class InitServices {
 		}
 	}
 
+	private void initConsummation() throws IOException {
+//		consumeTeams();
+		consumeGames();
+	}
+
 	private void throwCouldNotStartServices(List<IsConnected> failedServices) {
 		throw new IllegalStateException(
 		        "COULD NOT START SOME OF THE SERVICES : " + Arrays.toString(failedServices.toArray()));
 	}
 
-	private void rb() throws IOException {
-		String TASK_QUEUE_NAME = GuiceInjector.get(PropertyLoader.class).getProperty("rmq.queueName");
-		messageConsumer.consume(TASK_QUEUE_NAME, new OnMessageConsumption<Void>() {
+	private void consumeGames() throws IOException {
+		for (Integer i = 2005; i <= 2016; i++) {
+			final String index = i.toString() + "-" + (i + 1);
+			dataIndexer.createIndex(index, false);
+		}
+
+		String GAMES_TASK_QUEUE_NAME = GuiceInjector.get(PropertyLoader.class).getProperty("rmq.queueName.games");
+		messageConsumer.consume(GAMES_TASK_QUEUE_NAME, new OnMessageConsumption<Void>() {
 			@Override
 			public Void execute(byte[] body, Object... args) throws Exception {
 				String message = new String(body, "UTF-8");
-				HockeyScrapperUtils.unmarshall(message).parallelStream().forEach(game -> safeInsertGame(game));
+				logger.info(message);
+
+				HockeyScrapperUtils.unmarshallGames(message).parallelStream().forEach(game -> safeInsertGame(game));
 				return null;
 			}
 		});
 
-//		Integer month = 10;
-//		Integer year = 2005;
-//
-//		final String index = year.toString();
-		// elasticsearchWriteCtrl.createIndex(index, false);
-		//
-		// for (int day = 1; day <= 5; day++) {
-		// String url = "http://localhost:8989/nhl/v1/" + day + "/" + month + "/" + year;
-		// hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url,
-		// HttpVerb.GET).build());
+//		String url = "http://localhost:8989/nhl/v1/season/2005-2006";
+//		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
+//		
+//		String url = "http://localhost:8989/nhl/v1/season/2006-2007";
+//		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
+	}
+
+	private void consumeTeams() throws IOException {
+		dataIndexer.createIndex("teams", false); // TODO name hardcoded
+
+		String TEAMS_TASK_QUEUE_NAME = GuiceInjector.get(PropertyLoader.class).getProperty("rmq.queueName.teams");
+		System.out.println(TEAMS_TASK_QUEUE_NAME);
+		messageConsumer.consume(TEAMS_TASK_QUEUE_NAME, new OnMessageConsumption<Void>() {
+			@Override
+			public Void execute(byte[] body, Object... args) throws Exception {
+				String message = new String(body, "UTF-8");
+				// writeToFile(message);
+				logger.info(message);
+				System.out.println(message);
+
+				List<Object> responseList = HockeyScrapperUtils.responseToList(message);
+				safeIndexTeams(responseList);
+				return null;
+			}
+		});
+
+//		String url = "http://localhost:8989/nhl/v1/teams";
+//		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
+
+	}
+
+	private void writeToFile(String message) {
+		File file = new File("values.json");
+		try {
+			FileWriter fileWriter = new FileWriter(file, true);
+			fileWriter.append(message);
+			fileWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// File file = new File("value.txt");
+		// try {
+		// Files.write(message, file, Charsets.UTF_8);
+		// String result = Files.toString(file, Charsets.UTF_8);
+		// } catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
 		// }
+	}
+
+	private Map<String, Team> mappingNames = new HashMap<>();
+
+	private void addNames(Team team) {
+		mappingNames.put(team.getCurrentName(), team);
+		team.getPastNames().stream().forEach(previousTeamName -> mappingNames.put(previousTeamName, team));
+	}
+
+	@SuppressWarnings("unchecked")
+	private void safeIndexTeams(List<Object> responseList) {
+		try {
+			for (Object o : responseList) {
+				Map<String, Object> responseMap = (Map<String, Object>) o;
+				String currentName = (String) responseMap.get(TeamElasticsearchField.CURRENT_NAME.getJsonFieldName());
+				List<String> pastNames = (ArrayList<String>) responseMap
+				        .get(TeamElasticsearchField.PAST_NAMES.getJsonFieldName());
+				Team team = new Team(currentName, pastNames);
+				addNames(team);
+				dataIndexer.indexDocument(team);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private void safeInsertGame(Game game) {
 		try {
-			elasticsearchWriteCtrl.insertGame(game);
-			System.out.println(Arrays.toString(game.buildDocument().entrySet().toArray()));
+			dataIndexer.indexDocument(game);
+			// System.out.println(Arrays.toString(game.buildDocument().entrySet().toArray()));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

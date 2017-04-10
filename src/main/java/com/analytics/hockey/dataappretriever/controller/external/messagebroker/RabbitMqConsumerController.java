@@ -42,6 +42,9 @@ public class RabbitMqConsumerController implements MessageConsumer {
 		this.propertyLoader = null;
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public synchronized void start() throws IOException, TimeoutException {
 		if (isNotStarted(connection, channel)) {
@@ -82,6 +85,9 @@ public class RabbitMqConsumerController implements MessageConsumer {
 
 	final int MAX_RETRIES = 3; // TODO
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public void awaitInitialization() {
 		for (int i = 0; !this.channel.isOpen() && i <= MAX_RETRIES; i++) {
@@ -94,6 +100,9 @@ public class RabbitMqConsumerController implements MessageConsumer {
 		}
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public void addClientShutDownHook() {
 		getRuntime().addShutdownHook(new Thread(() -> {
@@ -105,14 +114,17 @@ public class RabbitMqConsumerController implements MessageConsumer {
 		}));
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public <T> void consume(final String taskQueueName, final OnMessageConsumption<T> action) throws IOException {
-		channel.queueDeclare(taskQueueName, false, false, false, null);
+	public <T> void consume(final String queueName, final OnMessageConsumption<T> action) throws IOException {
+		channel.queueDeclare(queueName, false, false, false, null);
 
 		Consumer consumer = createConsumer(channel, action);
 
-		String tag = channel.basicConsume(taskQueueName, consumer);
-		logger.info("Consumer tag received : {}", tag);
+		String tag = channel.basicConsume(queueName, consumer);
+		logger.info("Consumer tag received for queue {} : {}", queueName, tag);
 	}
 	
 	private boolean isNotStarted(Connection connection, Channel channel) {

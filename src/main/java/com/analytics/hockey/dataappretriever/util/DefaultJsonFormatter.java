@@ -1,7 +1,6 @@
 package com.analytics.hockey.dataappretriever.util;
 
 import java.io.IOException;
-import java.util.Map;
 
 import com.analytics.hockey.dataappretriever.exception.JsonException;
 import com.analytics.hockey.dataappretriever.model.JsonFormatter;
@@ -26,7 +25,7 @@ public class DefaultJsonFormatter implements JsonFormatter {
 	}
 
 	@Override
-	public String toPrettyJson(Map<String, Object> document, int indent) throws JsonException {
+	public String toPrettyJson(Object o, int indent) throws JsonException {
 		throw new UnsupportedOperationException("Missing implementation");
 	}
 

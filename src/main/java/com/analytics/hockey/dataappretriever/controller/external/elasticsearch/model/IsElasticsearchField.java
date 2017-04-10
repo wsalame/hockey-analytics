@@ -7,5 +7,5 @@ public interface IsElasticsearchField<T> {
 	
 	FieldDatatype getFieldDatatype();
 	
-	String getJson();
+	String getJsonFieldName();
 }

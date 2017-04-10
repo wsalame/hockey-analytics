@@ -15,28 +15,35 @@ import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.e
 public class TransportClientFactory {
 
 	private Map<String, String> settings;
-	private String clientTransportHost;
-	private Integer clientTransportPort;
+	private String host;
+	private Integer port;
 
-	public TransportClientFactory(String clientTransportHost, Integer clientTransportPort) {
-		this(new HashMap<String, String>(), clientTransportHost, clientTransportPort);
+	public TransportClientFactory(String host, Integer port) {
+		this(new HashMap<String, String>(), host, port);
 	}
 
-	public TransportClientFactory(Map<String, String> settings, String clientTransportHost,
-	        Integer clientTransportPort) {
+	public TransportClientFactory(Map<String, String> settings, String host, Integer port) {
 		this.settings = settings;
-		this.clientTransportHost = clientTransportHost;
-		this.clientTransportPort = clientTransportPort;
+		this.host = host;
+		this.port = port;
 	}
 
+	/**
+	 * Builds a client that knows how to communicate wit the cluster, using the settings,
+	 * host, and port defined in the constructor
+	 * 
+	 * @return A client that knows how to communicate with cluster
+	 * @throws ElasticsearchUnavailableException
+	 *             If connection to Elasticsearch cluster is not possible
+	 */
 	public TransportClient build() throws ElasticsearchUnavailableException {
 		TransportClient client = null;
 
 		try {
-			InetAddress inetAddress = InetAddress.getByName(clientTransportHost);
+			InetAddress inetAddress = InetAddress.getByName(host);
 			Settings s = Settings.builder().put(this.settings).build();
 			client = TransportClient.builder().settings(s).build()
-			        .addTransportAddress(new InetSocketTransportAddress(inetAddress, clientTransportPort));
+			        .addTransportAddress(new InetSocketTransportAddress(inetAddress, port));
 		} catch (Exception e) {
 			throw new ElasticsearchUnavailableException("Could not connect to Elasticsearch");
 		}
@@ -46,6 +53,14 @@ public class TransportClientFactory {
 		return client;
 	}
 
+	/**
+	 * Cluster could be connectable, but in an invalid state. This verifies that there are
+	 * at least 1 node connectable.
+	 * 
+	 * @param client
+	 *            Client that will be used to connect to the cluster
+	 * @throws ElasticsearchUnavailableException
+	 */
 	private void verifyConnection(TransportClient client) throws ElasticsearchUnavailableException {
 		List<DiscoveryNode> nodes = client.connectedNodes();
 		if (nodes.isEmpty()) {

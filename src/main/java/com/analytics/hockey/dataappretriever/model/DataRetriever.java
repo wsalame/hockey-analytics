@@ -6,11 +6,11 @@ import com.google.inject.ImplementedBy;
 
 @ImplementedBy(ElasticsearchReadController.class)
 public interface DataRetriever extends IsConnected{
-	String getTeamNames(int season) throws ElasticsearchRetrieveException;
+	String getTeamNames(String season) throws ElasticsearchRetrieveException;
 
-	String getTotalGoals(int season, String team, Long startEpochMillis, Long endEpochMillis) throws ElasticsearchRetrieveException;
+	String getTotalGoals(String season, String team, Long startEpochMillis, Long endEpochMillis) throws ElasticsearchRetrieveException;
 	
-	String getTotalGoals(int season, String team) throws ElasticsearchRetrieveException;
+	String getTotalGoals(String season, String team) throws ElasticsearchRetrieveException;
 	
-	String getScores(int season, int day, int month, int year) throws ElasticsearchRetrieveException;
+	String getScores(int day, int month, int year) throws ElasticsearchRetrieveException;
 }

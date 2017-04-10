@@ -22,5 +22,5 @@ log.txt
 ScrapperHockey/.idea/*
 *.pyc
 
-
+responses.txt
 /target/

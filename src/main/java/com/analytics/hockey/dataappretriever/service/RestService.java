@@ -38,6 +38,9 @@ public class RestService implements ExposedApiService {
 		this.propertyLoader = propertyLoader;
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public void start() {
 		Spark.ipAddress(propertyLoader.getProperty("spark.host").intern());
@@ -71,6 +74,9 @@ public class RestService implements ExposedApiService {
 		});
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public void addClientShutDownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -81,6 +87,9 @@ public class RestService implements ExposedApiService {
 		});
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public void awaitInitialization() {
 		Spark.awaitInitialization();
@@ -95,7 +104,7 @@ public class RestService implements ExposedApiService {
 
 	Route nhlTeamsBySeasonRoute = (request, response) -> {
 		try {
-			String teamNames = getTeamNames(Integer.valueOf(request.params(":season")));
+			String teamNames = getTeamNames(request.params(":season"));
 			response.status(200);
 			response.type("application/json");
 
@@ -141,19 +150,28 @@ public class RestService implements ExposedApiService {
 		return request.queryParams("pretty") == null ? output : jsonFormatter.toPrettyJson(output, 2);
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public String getTeamNames(int season) throws Exception {
+	public String getTeamNames(String season) throws Exception {
 		return dataRetriever.getTeamNames(season);
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public String getTotalGoals(int season, String team, Map<String, Object> params) throws Exception {
+	public String getTotalGoals(String season, String team, Map<String, Object> params) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
-	public String getTotalPoints(int season, String team, Map<String, Object> params) throws Exception {
+	public String getTotalPoints(String season, String team, Map<String, Object> params) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

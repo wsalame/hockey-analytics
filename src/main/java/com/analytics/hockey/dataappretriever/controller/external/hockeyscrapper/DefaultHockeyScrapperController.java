@@ -34,6 +34,7 @@ public class DefaultHockeyScrapperController implements HockeyScrapper {
 
 	@Override
 	public void awaitInitialization() {
+		//TODO send dummy request to check if alive
 		// client.
 	}
 

@@ -25,7 +25,7 @@ public class ElasticsearchUtils {
 			builder.startObject("properties");
 
 			for (IsElasticsearchField<?> param : values) {
-				builder.startObject(param.getJson());
+				builder.startObject(param.getJsonFieldName());
 				param.getFieldDatatype().buildMappingField(builder);
 				builder.endObject();
 			}

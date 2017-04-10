@@ -1,3 +1,14 @@
+class Team:
+    def __init__(self):
+        self.current_name = ''
+        self.past_names = []
+
+    @property
+    def serialize(self):
+        return {
+            'current_name': self.current_name,
+            'past_names': self.past_names,
+        }
 
 class Game:
     def __init__(self):
