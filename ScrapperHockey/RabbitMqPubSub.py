@@ -1,6 +1,5 @@
 import pika
 
-
 class MessagePublisher:
     def __init__(self, queueName):
         self.queue_name = queueName

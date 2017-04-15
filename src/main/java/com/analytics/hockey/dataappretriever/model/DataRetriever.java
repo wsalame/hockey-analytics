@@ -8,9 +8,6 @@ import com.google.inject.ImplementedBy;
 
 @ImplementedBy(ElasticsearchReadController.class)
 public interface DataRetriever extends IsConnected {
-	// TODO AKKA Actors
-	// TODO javadoc
-
 	/**
 	 * Return all team names. If it's for a defined season, return the exact names for
 	 * given season. The returned name will be the "current" name for the given season.
@@ -33,6 +30,5 @@ public interface DataRetriever extends IsConnected {
 
 	String getStats(String season, String team, Map<String, Object> params) throws DataStoreException;
 
-	/////
 	String getStandings(String season, String team, Map<String, Object> params) throws DataStoreException;
 }

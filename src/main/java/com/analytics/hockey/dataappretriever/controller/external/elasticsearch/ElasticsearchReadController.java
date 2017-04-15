@@ -93,8 +93,8 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 	 */
 	@Override
 	public String getScores(Integer year, Integer month, Integer day, Map<String, Object> params) {
-		final String index = new Game().buildGamesIndex(year, month); // TODO
-		final String type = new Game().buildType(month); // TODO
+		final String index = new Game().buildGamesIndex(year, month);
+		final String type = new Game().buildType(month);
 
 		SearchResponse response = getClient().prepareSearch(index).setTypes(type)
 		        .setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
@@ -164,7 +164,7 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		                .sizeIfRequired(queryParameters, DEFAULT_SIZE).sortIfRequired(queryParameters);
 
 		TermsBuilder winsAggBuilder = new AggregationPerOpponentBuilder(WINS_BY_TEAM_AGG_NAME,
-		        GameElasticsearchField.LOSER_TEAM, StatsField.WINS, GameElasticsearchField.IS_REGULATION_TIME_WIN)
+		        GameElasticsearchField.LOSER_TEAM, StatsField.WINS, GameElasticsearchField.IS_REGULATION_OR_OVERTIME_WIN)
 		                .sizeIfRequired(queryParameters, DEFAULT_SIZE).sortIfRequired(queryParameters);
 
 		FilterAggregationBuilder byTeamAgg = AggregationBuilders.filter(BY_TEAM_MAIN_AGG)

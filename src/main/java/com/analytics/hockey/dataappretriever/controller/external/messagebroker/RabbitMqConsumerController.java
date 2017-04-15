@@ -149,7 +149,7 @@ public class RabbitMqConsumerController implements MessageConsumer {
 			// wrapped in a try/finally clause
 			action.execute(body);
 		} catch (Exception e) {
-			logger.error(e);
+			logger.error(e.toString(), e);
 		} finally {
 			try {
 				channel.basicAck(envelope.getDeliveryTag(), false);

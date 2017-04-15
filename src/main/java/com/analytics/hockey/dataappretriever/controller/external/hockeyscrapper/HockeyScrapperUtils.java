@@ -21,7 +21,6 @@ public class HockeyScrapperUtils {
 	private static final TypeReference<List<Object>> listObjectMapperTypeRef = new TypeReference<List<Object>>() {
 	};
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
 
 	public static List<Game> unmarshallGames(String responseAsJson) throws Exception {
 		List<Game> games = null;
@@ -35,8 +34,7 @@ public class HockeyScrapperUtils {
 	@SuppressWarnings("unchecked")
 	private static List<Game> extractGames(Map<String, Object> responseMap, LocalDate date)
 	        throws GameUnmarshallException {
-		List<Object> o = (List<Object>) responseMap.get("games"); // TODO externaliser les
-		                                                          // noms
+		List<Object> o = (List<Object>) responseMap.get("games"); // TODO hardcoded values
 		List<Game> games = o.stream().map(x -> new Game((Map<String, Object>) x, date)).collect(Collectors.toList());
 
 		return games;
@@ -49,11 +47,11 @@ public class HockeyScrapperUtils {
 
 	public static Map<String, Object> responseToMap(String responseAsJson)
 	        throws JsonParseException, JsonMappingException, IOException {
-		return objectMapper.readValue(responseAsJson, mapObjectMapperTypeRef);
+		return new ObjectMapper().readValue(responseAsJson, mapObjectMapperTypeRef);
 	}
 
 	public static List<Object> responseToList(String responseAsJson)
 	        throws JsonParseException, JsonMappingException, IOException {
-		return objectMapper.readValue(responseAsJson, listObjectMapperTypeRef);
+		return new ObjectMapper().readValue(responseAsJson, listObjectMapperTypeRef);
 	}
 }

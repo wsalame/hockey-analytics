@@ -4,7 +4,7 @@ public enum PropertyConstant {
     // Rabbit MQ
 	RMQ_PORT("rmq.port"),
 	RMQ_HOST("rmq.host"),
-	RMQ_QUEUE_NAME_GAMES("games"),
+	RMQ_QUEUE_NAME_GAMES("rmq.queueName.games"),
 	RMQ_QUEUE_NAME_TEAMS("rmq.queueName.teams"),
 	RMQ_TIME_OUT_MILLIS("rmq.timeOutCloseConnectionMillis"),
 	RMQ_MAX_RETRIES("rmq.maxRetries"),

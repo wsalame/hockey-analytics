@@ -17,7 +17,7 @@ class Game:
         self.home_team = ''
         self.score_winner = 0
         self.score_loser = 0
-        self.is_regulation_time_win = True
+        self.is_row = True
 
     @property
     def serialize(self):
@@ -27,7 +27,7 @@ class Game:
             'home_team': self.home_team,
             'score_winner': int(self.score_winner),
             'score_loser': int(self.score_loser),
-            'is_regulation_time_win': self.is_regulation_time_win,
+            'is_row': self.is_row,
         }
 
 

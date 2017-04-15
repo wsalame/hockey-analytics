@@ -76,7 +76,7 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 	},
-	IS_REGULATION_TIME_WIN("is_regulation_time_win", FieldDatatype.BOOLEAN) {
+	IS_REGULATION_OR_OVERTIME_WIN("is_row", FieldDatatype.BOOLEAN) {
 		@Override
 		public Object getIndexingValue(Game game) {
 			return game.isRegulatimeTimeWin();
@@ -88,14 +88,14 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 	},
-	DATE("date", FieldDatatype.DATE) { // TODO changer le json date en quelque chose
-	                                   // dautre genre day_date
+	DATE("date", FieldDatatype.DATE) {
 		@Override
 		public Object getIndexingValue(Game game) {
 			// We could store the date as dd-MM-yyyy, or any other format, but it will
 			// require internally extra processing to convert (and be able to do
 			// comparing). To avoid this, we will directly convert the value to millis,
-			// although we actually only care about the day
+			// even if we actually only care about the day (it doesn't matter if the game
+			// is at 1PM or 7PM)
 			return TimeUnit.DAYS.toMillis(game.getDate().toEpochDay());
 		}
 

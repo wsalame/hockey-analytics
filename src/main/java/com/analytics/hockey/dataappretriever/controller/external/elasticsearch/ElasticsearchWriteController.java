@@ -91,7 +91,7 @@ public class ElasticsearchWriteController extends AbstractElasticsearchControlle
 			CreateIndexResponse response = createIndexRequestBuilder.execute().actionGet();
 			if (!response.isAcknowledged()) {
 				logger.error("Could not create index");
-				throw new RuntimeException(); // TODO throw ESException
+				throw new DataStoreException("Could not create index");
 			}
 		}
 	}
@@ -104,6 +104,7 @@ public class ElasticsearchWriteController extends AbstractElasticsearchControlle
 				        .actionGet(); // We want to wait for the mapping to be
 				                      // acknowledged and added to elasticsearch's
 				                      // internal buffer queue
+				gamesMappingParametersCache.put(index + INDEX_TYPE_SEPARATOR + type, true);
 			}
 		} catch (IOException | ExecutionException e) {
 			logger.error(e, e);

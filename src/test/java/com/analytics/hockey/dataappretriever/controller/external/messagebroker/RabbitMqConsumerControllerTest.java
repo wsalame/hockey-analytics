@@ -1,7 +1,6 @@
 package com.analytics.hockey.dataappretriever.controller.external.messagebroker;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -129,7 +128,7 @@ public class RabbitMqConsumerControllerTest {
 	}
 
 	@Test
-	public void handleDelivery_ackIsStillSentAfterException() {
+	public void handleDelivery_ackIsStillSentAfterException() throws Exception {
 		/*** given ***/
 		RabbitMqConsumerController rmq = createDefaultSpy();
 		@SuppressWarnings("unchecked")
@@ -140,25 +139,17 @@ public class RabbitMqConsumerControllerTest {
 		ArgumentCaptor<Long> envelopeCaptor = ArgumentCaptor.forClass(Long.class);
 
 		/*** when ***/
-		try {
-			doThrow(Exception.class).when(action).execute(body);
-			when(envelope.getDeliveryTag()).thenReturn(1234L);
-			rmq.handleDelivery(action, body, envelope);
-		} catch (Exception e) {
-			fail();
-		}
+		doThrow(Exception.class).when(action).execute(body);
+		when(envelope.getDeliveryTag()).thenReturn(1234L);
+		rmq.handleDelivery(action, body, envelope);
 
 		/*** then ***/
-		try {
-			verify(mockedChannel).basicAck(envelopeCaptor.capture(), anyBoolean());
-			assertEquals(envelope.getDeliveryTag(), envelopeCaptor.getValue().longValue());
-		} catch (IOException e) {
-			// Will never happen. It's a mock
-		}
+		verify(mockedChannel).basicAck(envelopeCaptor.capture(), anyBoolean());
+		assertEquals(envelope.getDeliveryTag(), envelopeCaptor.getValue().longValue());
 	}
 
 	@Test
-	public void start_hostAndPortAreSetFromPropertyLoader_changeDefaultValues() {
+	public void start_hostAndPortAreSetFromPropertyLoader_changeDefaultValues() throws IOException, TimeoutException {
 		/*** given ***/
 		RabbitMqConsumerController rmq = createDefaultSpy();
 		rmq.setChannel(null);
@@ -172,31 +163,26 @@ public class RabbitMqConsumerControllerTest {
 		int port = 1993;
 
 		/*** when ***/
-		try {
-			// properties
+		// properties
 
-			// if it returns a value, it means it's a defined property, therefore,
-			// we should set the host/port
-			when(propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString())).thenReturn(host);
-			when(propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_PORT.toString())).thenReturn(port);
+		// if it returns a value, it means it's a defined property, therefore,
+		// we should set the host/port
+		when(propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString())).thenReturn(host);
+		when(propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_PORT.toString())).thenReturn(port);
 
-			// create channel and connection
-			when(rmq.createConnectionFactory()).thenReturn(connectionFactory);
-			when(connectionFactory.newConnection()).thenReturn(mockedConnection);
-			when(mockedConnection.createChannel()).thenReturn(mockedChannel);
-			rmq.start();
-		} catch (IOException | TimeoutException e1) {
-			// Will never happen. It's a mock
-		}
+		// create channel and connection
+		when(rmq.createConnectionFactory()).thenReturn(connectionFactory);
+		when(connectionFactory.newConnection()).thenReturn(mockedConnection);
+		when(mockedConnection.createChannel()).thenReturn(mockedChannel);
+		rmq.start();
 
 		/*** then ***/
-
 		verify(connectionFactory).setHost(host);
 		verify(connectionFactory).setPort(port);
 	}
 
 	@Test
-	public void start_hostAndPortAreMissingFromPropertyLoader_shouldNotChangeDefaultValues() {
+	public void start_hostAndPortAreMissingFromPropertyLoader_shouldNotChangeDefaultValues() throws IOException, TimeoutException {
 		/*** given ***/
 		RabbitMqConsumerController rmq = createDefaultSpy();
 		rmq.setChannel(null);
@@ -207,23 +193,19 @@ public class RabbitMqConsumerControllerTest {
 
 		ConnectionFactory connectionFactory = Mockito.mock(ConnectionFactory.class);
 		/*** when ***/
-		try {
-			// properties
+		// properties
 
-			// if it returns null, it means it's not a defined property, therefore,
-			// we shouldn't set the host/port
-			when(propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString())).thenReturn(null);
-			when(propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_PORT.toString())).thenReturn(null);
+		// if it returns null, it means it's not a defined property, therefore,
+		// we shouldn't set the host/port
+		when(propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString())).thenReturn(null);
+		when(propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_PORT.toString())).thenReturn(null);
 
-			// create channel and connection
-			when(rmq.createConnectionFactory()).thenReturn(connectionFactory);
-			when(connectionFactory.newConnection()).thenReturn(mockedConnection);
-			when(mockedConnection.createChannel()).thenReturn(mockedChannel);
+		// create channel and connection
+		when(rmq.createConnectionFactory()).thenReturn(connectionFactory);
+		when(connectionFactory.newConnection()).thenReturn(mockedConnection);
+		when(mockedConnection.createChannel()).thenReturn(mockedChannel);
 
-			rmq.start();
-		} catch (IOException | TimeoutException e1) {
-			// Will never happen. It's a mock
-		}
+		rmq.start();
 
 		/*** then ***/
 		verify(connectionFactory, never()).setHost(anyString());
@@ -260,7 +242,7 @@ public class RabbitMqConsumerControllerTest {
 	}
 
 	@Test
-	public void handleDelivery_ackIsSent() {
+	public void handleDelivery_ackIsSent() throws IOException {
 		/*** given ***/
 		RabbitMqConsumerController rmq = createDefaultSpy();
 		@SuppressWarnings("unchecked")
@@ -272,19 +254,11 @@ public class RabbitMqConsumerControllerTest {
 		ArgumentCaptor<Long> envelopeCaptor = ArgumentCaptor.forClass(Long.class);
 
 		/*** when ***/
-		try {
-			when(envelope.getDeliveryTag()).thenReturn(1234L);
-			rmq.handleDelivery(action, body, envelope);
-		} catch (Exception e) {
-			fail();
-		}
+		when(envelope.getDeliveryTag()).thenReturn(1234L);
+		rmq.handleDelivery(action, body, envelope);
 
 		/*** then ***/
-		try {
-			verify(mockedChannel).basicAck(envelopeCaptor.capture(), anyBoolean());
-			assertEquals(envelope.getDeliveryTag(), envelopeCaptor.getValue().longValue());
-		} catch (IOException e) {
-			// Will never happen. It's a mock
-		}
+		verify(mockedChannel).basicAck(envelopeCaptor.capture(), anyBoolean());
+		assertEquals(envelope.getDeliveryTag(), envelopeCaptor.getValue().longValue());
 	}
 }

@@ -10,6 +10,7 @@ import Queue
 
 app = Flask(__name__)
 day_cache = dict()
+NUMBER_OF_GAMES_PER_SEASON = 82
 
 
 def extract_winner_team(game_element):
@@ -37,9 +38,10 @@ def extract_score_loser(game_element):
     return el[0].text
 
 
-def extract_is_regulation_time_win(game_element):
+def extract_is_row(game_element):
     el = game_element[0].xpath("//tr[position()=2]/td[position()=3]")
     return not el[0].text.startswith('SO')
+
 
 def is_in_cache(day, month, year):
     return ('%d%d%d' % (day, month, year)) in day_cache
@@ -54,7 +56,7 @@ def is_regular_season(page):  # TODO add tests. call page that is during playoff
 
         # If all teams have played 82 games, then the regular season is over.
         for gamePlayedTmp in page.xpath("//td[contains(@data-stat, 'games')]"):
-            is_regular_season = is_regular_season or gamePlayedTmp.text != '82'
+            is_regular_season = is_regular_season or gamePlayedTmp.text != str(NUMBER_OF_GAMES_PER_SEASON)
 
     return is_regular_season
 
@@ -69,7 +71,7 @@ def is_regular_season_patch(is_regular_season_v, month, year):
     key = ('%d%d' % (month, year))
     patch_is_regular_season_v = is_regular_season_v
     if not patch_is_regular_season_v and key not in regular_season_ended_set:
-        regular_season_ended_set.add(key) # April
+        regular_season_ended_set.add(key)  # April
         patch_is_regular_season_v = True
 
     return patch_is_regular_season_v
@@ -79,7 +81,7 @@ def extract_scores_of_the_day(page, day, month, year):
     print "Retrieving %d/%d/%d" % (day, month, year)
     games = list()
 
-    if is_regular_season_patch(is_regular_season(page), month, year): #TODO move le if quelque part dautre?
+    if is_regular_season_patch(is_regular_season(page), month, year):
         for gameTmp in page.xpath("//table[contains(@class, 'teams')]"):
             game_element = html.HtmlElement(gameTmp)
             game = Game()
@@ -89,7 +91,7 @@ def extract_scores_of_the_day(page, day, month, year):
             game.home_team = extract_home_team(game_element)
             game.score_winner = extract_score_winner(game_element)
             game.score_loser = extract_score_loser(game_element)
-            game.is_regulation_time_win = extract_is_regulation_time_win(game_element)
+            game.is_row = extract_is_row(game_element)
             games.append(game)
     else:
         print "Skipped %d/%d/%d" % (day, month, year)
@@ -174,9 +176,8 @@ def scrapGamesInSeason(season):
 
     # We want to return immediately an a response because scrapping will take time. No need to Thread#join().
     # Result will be communicated using the message broker RabbitMQ
-    response = {'status', 'executing'}
+    response = {'status': 'executing'}
     return createHttpResponse(request, json.dumps(response))
-
 
 def scrapGamesInRangeOfMonths(range_months_inclusive, year, result_queue):
     # We will store the result in the queue, instead of appending to the "final" list
@@ -193,7 +194,7 @@ def scrapGamesInRangeOfMonths(range_months_inclusive, year, result_queue):
 
 
 @app.route('/nhl/v1/<int:day>/<int:month>/<int:year>', methods=['GET', 'POST'])
-def scrapGamesInSingleDay(day, month, year):  # TODO add convention in name when it's @app_route
+def scrapGamesInSingleDay(day, month, year):
     day_obj = scrapSingleDayHelper(day, month, year)
 
     publishToBrokerIfExists(day_obj.serialize, 'games')
