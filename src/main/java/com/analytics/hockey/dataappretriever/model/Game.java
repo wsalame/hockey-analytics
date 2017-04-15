@@ -19,10 +19,10 @@ public class Game implements IsElasticsearchIndexable {
 	private LocalDate date;
 
 	@VisibleForTesting
-	public Game(){
-		
+	public Game() {
+
 	}
-	
+
 	public Game(LocalDate date) {
 		this.date = date;
 	}
@@ -119,13 +119,13 @@ public class Game implements IsElasticsearchIndexable {
 		int month = date.getMonthValue();
 		int year = date.getYear();
 
-		return buildGamesIndex(month, year);
+		return buildGamesIndex(year, month);
 	}
 
 	/**
 	 * @see {@link #buildIndex()}
 	 */
-	public String buildGamesIndex(int month, int year) {
+	public String buildGamesIndex(int year, int month) {
 		String index = month >= 10 ? year + "-" + (year + 1) : (year - 1) + "-" + (year);
 
 		return index;
@@ -137,6 +137,13 @@ public class Game implements IsElasticsearchIndexable {
 	 */
 	@Override
 	public String buildType() {
-		return String.valueOf(getDate().getMonthValue());
+		return buildType(getDate().getMonthValue());
+	}
+
+	/**
+	 * @see {@link #buildType()}
+	 */
+	public String buildType(int month) {
+		return String.valueOf(month);
 	}
 }

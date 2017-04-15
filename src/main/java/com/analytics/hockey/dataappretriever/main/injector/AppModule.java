@@ -9,5 +9,7 @@ public class AppModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		bind(AsyncHttpClient.class).to(DefaultAsyncHttpClient.class);
+
+		// The other bindings in the app are defined by the @ImplementedBy annotation
 	}
 }

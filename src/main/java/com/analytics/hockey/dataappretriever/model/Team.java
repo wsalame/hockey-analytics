@@ -48,14 +48,6 @@ public class Team implements IsElasticsearchIndexable {
 		return document;
 	}
 
-	// TODO tests
-	public boolean isEqual(String teamName) {
-		return this.currentName.equals(teamName) || this.pastNames.contains(teamName); // TODO
-		                                                                               // more
-		                                                                               // efficient
-		                                                                               // way
-	}
-
 	public List<String> getAllNames() {
 		List<String> names = new ArrayList<>(1 + pastNames.size());
 		names.add(currentName);

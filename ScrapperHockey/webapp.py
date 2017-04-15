@@ -39,8 +39,7 @@ def extract_score_loser(game_element):
 
 def extract_is_regulation_time_win(game_element):
     el = game_element[0].xpath("//tr[position()=2]/td[position()=3]")
-    return not el[0].text.startswith('OT') and not el[0].text.startswith('SO')
-
+    return not el[0].text.startswith('SO')
 
 def is_in_cache(day, month, year):
     return ('%d%d%d' % (day, month, year)) in day_cache

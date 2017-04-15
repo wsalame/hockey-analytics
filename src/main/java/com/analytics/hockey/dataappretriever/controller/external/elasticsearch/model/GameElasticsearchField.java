@@ -24,8 +24,7 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 		@Override
-		public
-		void setValue(Game game, Object o) {
+		public void setValue(Game game, Object o) {
 			game.setWinnerTeam((String) o);
 		}
 
@@ -89,7 +88,8 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 		}
 
 	},
-	DATE("date", FieldDatatype.DATE) {
+	DATE("date", FieldDatatype.DATE) { // TODO changer le json date en quelque chose
+	                                   // dautre genre day_date
 		@Override
 		public Object getIndexingValue(Game game) {
 			// We could store the date as dd-MM-yyyy, or any other format, but it will
@@ -101,7 +101,8 @@ public enum GameElasticsearchField implements IsElasticsearchField<Game> {
 
 		@Override
 		public void setValue(Game game, Object o) throws Exception {
-			//TODO
+			// Date is in a different format coming from the scrapper. It is already set
+			// in the constructor of object {@link Game}
 		}
 	};
 

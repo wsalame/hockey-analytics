@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.util;
+package com.analytics.hockey.dataappretriever.utilImpl;
 
 import java.io.IOException;
 import java.io.InputStream;

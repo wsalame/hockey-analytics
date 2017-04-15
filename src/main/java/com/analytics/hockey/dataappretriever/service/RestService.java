@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.analytics.hockey.dataappretriever.exception.JsonException;
+import com.analytics.hockey.dataappretriever.main.PropertyConstant;
 import com.analytics.hockey.dataappretriever.model.DataRetriever;
 import com.analytics.hockey.dataappretriever.model.ExposedApiService;
 import com.analytics.hockey.dataappretriever.model.JsonFormatter;
@@ -43,8 +44,8 @@ public class RestService implements ExposedApiService {
 	 */
 	@Override
 	public void start() {
-		Spark.ipAddress(propertyLoader.getProperty("spark.host").intern());
-		Spark.port(propertyLoader.getPropertyAsInteger("spark.port"));
+		Spark.ipAddress(propertyLoader.getProperty(PropertyConstant.SPARK_HOST.toString()).intern());
+		Spark.port(propertyLoader.getPropertyAsInteger(PropertyConstant.SPARK_PORT.toString()));
 
 		// TODO use websockets ?
 
@@ -155,7 +156,7 @@ public class RestService implements ExposedApiService {
 	 */
 	@Override
 	public String getTeamNames(String season) throws Exception {
-		return dataRetriever.getTeamNames(season);
+		return dataRetriever.getTeams(season, null);
 	}
 
 	/**
@@ -163,7 +164,6 @@ public class RestService implements ExposedApiService {
 	 */
 	@Override
 	public String getTotalGoals(String season, String team, Map<String, Object> params) throws Exception {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -172,7 +172,6 @@ public class RestService implements ExposedApiService {
 	 */
 	@Override
 	public String getTotalPoints(String season, String team, Map<String, Object> params) throws Exception {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

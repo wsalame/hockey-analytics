@@ -6,7 +6,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.analytics.hockey.dataappretriever.main.AppConstants;
+import com.analytics.hockey.dataappretriever.main.PropertyConstant;
 import com.analytics.hockey.dataappretriever.model.MessageConsumer;
 import com.analytics.hockey.dataappretriever.model.OnMessageConsumption;
 import com.analytics.hockey.dataappretriever.model.PropertyLoader;
@@ -26,6 +26,7 @@ public class RabbitMqConsumerController implements MessageConsumer {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
 	private final int TIMEOUT_CLOSE_CONNECTION;
+	private final int MAX_RETRIES;
 
 	private Channel channel;
 	private Connection connection;
@@ -34,11 +35,13 @@ public class RabbitMqConsumerController implements MessageConsumer {
 	@Inject
 	public RabbitMqConsumerController(PropertyLoader propertyLoader) {
 		this.propertyLoader = propertyLoader;
-		TIMEOUT_CLOSE_CONNECTION = propertyLoader.getPropertyAsInteger("rmq.timeOutCloseConnectionMillis");
+		TIMEOUT_CLOSE_CONNECTION = propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_TIME_OUT_MILLIS.toString());
+		MAX_RETRIES = propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_MAX_RETRIES.toString());
 	}
 
 	public RabbitMqConsumerController() {
 		TIMEOUT_CLOSE_CONNECTION = -1;
+		MAX_RETRIES = 3;
 		this.propertyLoader = null;
 	}
 
@@ -51,8 +54,8 @@ public class RabbitMqConsumerController implements MessageConsumer {
 			//////////////////////////
 			// Init connection factory host and port
 			//////////////////////////
-			String host = propertyLoader.getProperty(AppConstants.RMQ_HOST);
-			Integer port = propertyLoader.getPropertyAsInteger(AppConstants.RMQ_PORT);
+			String host = propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString());
+			Integer port = propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_PORT.toString());
 			ConnectionFactory factory = createConnectionFactory();
 			if (host != null) {
 				factory.setHost(host);
@@ -69,28 +72,25 @@ public class RabbitMqConsumerController implements MessageConsumer {
 				this.connection = factory.newConnection();
 				this.channel = connection.createChannel();
 				addClientShutDownHook();
-			} catch(Exception e){
+			} catch (Exception e) {
 				this.connection = null;
 				this.channel = null;
 				throw e;
 			}
 		}
 	}
-	
-	//TODO
-//	@VisibleForTesting
-//	Channel createChannel(Connection connection) throws IOException{
-//		return connection.createChannel();
-//	}
 
-	final int MAX_RETRIES = 3; // TODO
+	@VisibleForTesting
+	int getMaxRetries(){
+		return this.MAX_RETRIES;
+	}
 
 	/**
 	 * @inheritDoc
 	 */
 	@Override
 	public void awaitInitialization() {
-		for (int i = 0; !this.channel.isOpen() && i <= MAX_RETRIES; i++) {
+		for (int i = 0; !this.channel.isOpen() && i <= getMaxRetries(); i++) {
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
@@ -126,7 +126,7 @@ public class RabbitMqConsumerController implements MessageConsumer {
 		String tag = channel.basicConsume(queueName, consumer);
 		logger.info("Consumer tag received for queue {} : {}", queueName, tag);
 	}
-	
+
 	private boolean isNotStarted(Connection connection, Channel channel) {
 		return connection == null || channel == null;
 	}
@@ -158,7 +158,7 @@ public class RabbitMqConsumerController implements MessageConsumer {
 			}
 		}
 	}
-	
+
 	@VisibleForTesting
 	ConnectionFactory createConnectionFactory() {
 		return new ConnectionFactory();

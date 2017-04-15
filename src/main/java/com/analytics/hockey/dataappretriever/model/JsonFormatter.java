@@ -1,7 +1,7 @@
 package com.analytics.hockey.dataappretriever.model;
 
 import com.analytics.hockey.dataappretriever.exception.JsonException;
-import com.analytics.hockey.dataappretriever.util.DefaultJsonFormatter;
+import com.analytics.hockey.dataappretriever.utilImpl.DefaultJsonFormatter;
 import com.google.inject.ImplementedBy;
 
 @ImplementedBy(DefaultJsonFormatter.class)

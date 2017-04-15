@@ -54,12 +54,32 @@ public class ElasticsearchTest { // TODO rename class name
 		mockedGame.setDate(LocalDate.of(year, month, 1));
 
 		// when
+		mockedGame.buildType();
+
+		// then
+		Mockito.verify(mockedGame).buildType(month);
+	}
+	
+	@Test
+	public void buildGameTypeIndex_isCallingBuildIndexWithPrimitivesTypesExtractedFromGameObject() {
+		// We are making sure #buildType() is calling the overloaded function
+		// #buildIndex(int), and is not reimplementing its own way of
+		// building the index. This way, we don't need to add extra tests for it
+
+		// given
+		int year = 2015;
+		int month = 4;
+		Game mockedGame = Mockito.spy(Game.class);
+		mockedGame.setDate(LocalDate.of(year, month, 1));
+
+		// when
 		mockedGame.buildIndex();
 
 		// then
-		Mockito.verify(mockedGame).buildGamesIndex(month, year);
+		Mockito.verify(mockedGame).buildGamesIndex(year, month);
 	}
 
+	//TODO Separer dans different test suit. test pour team
 	@Test
 	public void buildTeamIndex_returnsDefaultValue() {
 		assertEquals(new Team().buildIndex(), "teams");
@@ -69,4 +89,6 @@ public class ElasticsearchTest { // TODO rename class name
 	public void buildTeamType_returnsDefaultValue() {
 		assertEquals(new Team().buildType(), "teams");
 	}
+
+	
 }

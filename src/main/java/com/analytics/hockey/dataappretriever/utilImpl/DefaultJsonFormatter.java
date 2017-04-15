@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.util;
+package com.analytics.hockey.dataappretriever.utilImpl;
 
 import java.io.IOException;
 
@@ -14,9 +14,11 @@ public class DefaultJsonFormatter implements JsonFormatter {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public String toJson(Object o) throws JsonException {
-
 		try {
 			return mapper.writeValueAsString(o);
 		} catch (JsonProcessingException e) {
@@ -24,11 +26,17 @@ public class DefaultJsonFormatter implements JsonFormatter {
 		}
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public String toPrettyJson(Object o, int indent) throws JsonException {
 		throw new UnsupportedOperationException("Missing implementation");
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	@Override
 	public String toPrettyJson(String json, int indent) throws JsonException {
 		try {

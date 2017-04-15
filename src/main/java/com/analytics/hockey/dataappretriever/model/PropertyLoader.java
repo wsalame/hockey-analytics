@@ -1,6 +1,6 @@
 package com.analytics.hockey.dataappretriever.model;
 
-import com.analytics.hockey.dataappretriever.util.DefaultPropertyLoader;
+import com.analytics.hockey.dataappretriever.utilImpl.DefaultPropertyLoader;
 import com.google.inject.ImplementedBy;
 
 @ImplementedBy(DefaultPropertyLoader.class)
@@ -16,5 +16,8 @@ public interface PropertyLoader {
 	 */
 	String getProperty(String key);
 
+	/**
+	 * @see #getProperty(String)
+	 */
 	Integer getPropertyAsInteger(String key);
 }

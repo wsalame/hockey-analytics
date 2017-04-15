@@ -23,9 +23,8 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.stubbing.OngoingStubbing;
 
-import com.analytics.hockey.dataappretriever.main.AppConstants;
+import com.analytics.hockey.dataappretriever.main.PropertyConstant;
 import com.analytics.hockey.dataappretriever.model.OnMessageConsumption;
 import com.analytics.hockey.dataappretriever.model.PropertyLoader;
 import com.rabbitmq.client.Channel;
@@ -178,8 +177,8 @@ public class RabbitMqConsumerControllerTest {
 
 			// if it returns a value, it means it's a defined property, therefore,
 			// we should set the host/port
-			when(propertyLoader.getProperty(AppConstants.RMQ_HOST)).thenReturn(host);
-			when(propertyLoader.getPropertyAsInteger(AppConstants.RMQ_PORT)).thenReturn(port);
+			when(propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString())).thenReturn(host);
+			when(propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_PORT.toString())).thenReturn(port);
 
 			// create channel and connection
 			when(rmq.createConnectionFactory()).thenReturn(connectionFactory);
@@ -189,7 +188,7 @@ public class RabbitMqConsumerControllerTest {
 		} catch (IOException | TimeoutException e1) {
 			// Will never happen. It's a mock
 		}
-		
+
 		/*** then ***/
 
 		verify(connectionFactory).setHost(host);
@@ -213,14 +212,14 @@ public class RabbitMqConsumerControllerTest {
 
 			// if it returns null, it means it's not a defined property, therefore,
 			// we shouldn't set the host/port
-			when(propertyLoader.getProperty("rmq.host")).thenReturn(null);
-			when(propertyLoader.getPropertyAsInteger("rmq.port")).thenReturn(null);
+			when(propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString())).thenReturn(null);
+			when(propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_PORT.toString())).thenReturn(null);
 
 			// create channel and connection
 			when(rmq.createConnectionFactory()).thenReturn(connectionFactory);
 			when(connectionFactory.newConnection()).thenReturn(mockedConnection);
 			when(mockedConnection.createChannel()).thenReturn(mockedChannel);
-			
+
 			rmq.start();
 		} catch (IOException | TimeoutException e1) {
 			// Will never happen. It's a mock
@@ -251,17 +250,13 @@ public class RabbitMqConsumerControllerTest {
 		RabbitMqConsumerController rmq = createDefaultSpy();
 
 		/*** when ***/
-		OngoingStubbing<Boolean> when = when(mockedChannel.isOpen());
+		when(rmq.getMaxRetries()).thenReturn(5);
 
-		// This way we don't need to update the test if we change the number of retries.
-		// We will return the correct number of false
-		for (int i = 0; i < rmq.MAX_RETRIES; i++) {
-			when = when.thenReturn(false);
-		}
+		when(mockedChannel.isOpen()).thenReturn(false, new Boolean[] { false, false, false });
 
 		rmq.awaitInitialization();
 		/*** then ***/
-		verify(mockedChannel, atLeast(rmq.MAX_RETRIES + 1)).isOpen();
+		verify(mockedChannel, atLeast(rmq.getMaxRetries() + 1)).isOpen();
 	}
 
 	@Test

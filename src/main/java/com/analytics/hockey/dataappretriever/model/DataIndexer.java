@@ -3,6 +3,7 @@ package com.analytics.hockey.dataappretriever.model;
 import java.io.IOException;
 
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.ElasticsearchWriteController;
+import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.exception.DataStoreException;
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.IsElasticsearchIndexable;
 import com.google.inject.ImplementedBy;
 
@@ -18,11 +19,12 @@ public interface DataIndexer extends IsConnected {
 	 * @param deleteOldIndexIfExists
 	 *            If true, delete index that matches the same name. If false, ignore
 	 *            operation.
-	 * @throws IOException
+	 * @throws DataStoreException
+	 * @throws IOException 
 	 */
-	void createIndex(String indexName, boolean deleteOldIndexIfExists) throws IOException;
+	void createIndex(String indexName, boolean deleteOldIndexIfExists) throws DataStoreException, IOException;
 
-	void indexDocument(IsElasticsearchIndexable o) throws Exception; // TODO ?
+	void indexDocument(IsElasticsearchIndexable o) throws DataStoreException;
 
-	void deleteIndex(String indexName); // TODO throw DataIndexerException
+	void deleteIndex(String indexName) throws DataStoreException; 
 }

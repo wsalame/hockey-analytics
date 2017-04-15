@@ -17,7 +17,7 @@ import com.google.inject.Singleton;
 public class DefaultHockeyScrapperController implements HockeyScrapper {
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
-	private AsyncHttpClient client; // TODO should be binded to more generic client
+	private AsyncHttpClient client;
 
 	@Inject
 	public DefaultHockeyScrapperController(AsyncHttpClient client) {
@@ -34,8 +34,7 @@ public class DefaultHockeyScrapperController implements HockeyScrapper {
 
 	@Override
 	public void awaitInitialization() {
-		//TODO send dummy request to check if alive
-		// client.
+		// Nothing to await HTTP connection is established at call time
 	}
 
 	@Override
