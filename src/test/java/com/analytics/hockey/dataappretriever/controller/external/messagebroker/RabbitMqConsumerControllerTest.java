@@ -22,6 +22,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import com.analytics.hockey.dataappretriever.main.PropertyConstant;
 import com.analytics.hockey.dataappretriever.model.OnMessageConsumption;
@@ -40,32 +41,28 @@ public class RabbitMqConsumerControllerTest {
 	@Mock
 	Connection mockedConnection;
 
+	@Spy
+	RabbitMqConsumerController rmq;
+
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
-	}
-
-	private RabbitMqConsumerController createDefaultSpy() {
-		RabbitMqConsumerController rmq = Mockito.spy(RabbitMqConsumerController.class);
 		rmq.setChannel(mockedChannel);
 		rmq.setConnection(mockedConnection);
-		return rmq;
 	}
 
 	@Test
 	public void consume_verifyCorrectQueueConsumed() throws IOException {
 		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
-
 		String taskQueueName = "fakeQueue";
 		OnMessageConsumption<Void> onMessageConsumption = (x, y) -> {
 			return null;
 		};
 
 		Consumer consumer = new DefaultConsumer(mockedChannel);
+		when(rmq.createConsumer(mockedChannel, onMessageConsumption)).thenReturn(consumer);
 
 		/*** when ***/
-		when(rmq.createConsumer(mockedChannel, onMessageConsumption)).thenReturn(consumer);
 		rmq.consume(taskQueueName, onMessageConsumption);
 
 		/*** then ***/
@@ -76,8 +73,6 @@ public class RabbitMqConsumerControllerTest {
 	@Test
 	public void consume_verifyQueueIsDeclaredBeforeConsuming() throws IOException {
 		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
-
 		String taskQueueName = "fakeQueue";
 		OnMessageConsumption<Void> onMessageConsumption = (x, y) -> {
 			return null;
@@ -85,8 +80,9 @@ public class RabbitMqConsumerControllerTest {
 
 		Consumer consumer = new DefaultConsumer(mockedChannel);
 
-		/*** when ***/
 		when(rmq.createConsumer(mockedChannel, onMessageConsumption)).thenReturn(consumer);
+
+		/*** when ***/
 		rmq.consume(taskQueueName, onMessageConsumption);
 
 		/*** then ***/
@@ -103,11 +99,10 @@ public class RabbitMqConsumerControllerTest {
 	@Test
 	public void addClientShutDownHook_runtimeIsAddingShutDownHook() {
 		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
 		Runtime mockedRuntime = Mockito.mock(Runtime.class);
+		when(rmq.getRuntime()).thenReturn(mockedRuntime);
 
 		/*** when ***/
-		when(rmq.getRuntime()).thenReturn(mockedRuntime);
 		rmq.addClientShutDownHook();
 
 		/*** then ***/
@@ -116,9 +111,6 @@ public class RabbitMqConsumerControllerTest {
 
 	@Test
 	public void closeConnections_isClosingChannelAndConnection() throws IOException, TimeoutException {
-		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
-
 		/*** when ***/
 		rmq.closeConnections();
 
@@ -130,7 +122,6 @@ public class RabbitMqConsumerControllerTest {
 	@Test
 	public void handleDelivery_ackIsStillSentAfterException() throws Exception {
 		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
 		@SuppressWarnings("unchecked")
 		OnMessageConsumption<Void> action = Mockito.mock(OnMessageConsumption.class);
 
@@ -138,9 +129,10 @@ public class RabbitMqConsumerControllerTest {
 		Envelope envelope = Mockito.mock(Envelope.class);
 		ArgumentCaptor<Long> envelopeCaptor = ArgumentCaptor.forClass(Long.class);
 
-		/*** when ***/
 		doThrow(Exception.class).when(action).execute(body);
 		when(envelope.getDeliveryTag()).thenReturn(1234L);
+
+		/*** when ***/
 		rmq.handleDelivery(action, body, envelope);
 
 		/*** then ***/
@@ -151,7 +143,6 @@ public class RabbitMqConsumerControllerTest {
 	@Test
 	public void start_hostAndPortAreSetFromPropertyLoader_changeDefaultValues() throws IOException, TimeoutException {
 		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
 		rmq.setChannel(null);
 		rmq.setConnection(null);
 
@@ -162,9 +153,6 @@ public class RabbitMqConsumerControllerTest {
 		String host = "localhost";
 		int port = 1993;
 
-		/*** when ***/
-		// properties
-
 		// if it returns a value, it means it's a defined property, therefore,
 		// we should set the host/port
 		when(propertyLoader.getProperty(PropertyConstant.RMQ_HOST.toString())).thenReturn(host);
@@ -174,6 +162,9 @@ public class RabbitMqConsumerControllerTest {
 		when(rmq.createConnectionFactory()).thenReturn(connectionFactory);
 		when(connectionFactory.newConnection()).thenReturn(mockedConnection);
 		when(mockedConnection.createChannel()).thenReturn(mockedChannel);
+
+		/*** when ***/
+
 		rmq.start();
 
 		/*** then ***/
@@ -182,9 +173,9 @@ public class RabbitMqConsumerControllerTest {
 	}
 
 	@Test
-	public void start_hostAndPortAreMissingFromPropertyLoader_shouldNotChangeDefaultValues() throws IOException, TimeoutException {
+	public void start_hostAndPortAreMissingFromPropertyLoader_shouldNotChangeDefaultValues()
+	        throws IOException, TimeoutException {
 		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
 		rmq.setChannel(null);
 		rmq.setConnection(null);
 
@@ -214,28 +205,27 @@ public class RabbitMqConsumerControllerTest {
 
 	@Test
 	public void awaitInitialization_readyAtThirdTry() {
-		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
+		/** given **/
+		int maxRetries = 3;
+
+		when(mockedChannel.isOpen()).thenReturn(false, false, true);
+		when(rmq.getMaxRetries()).thenReturn(maxRetries);
 
 		/*** when ***/
-		when(mockedChannel.isOpen()).thenReturn(false, false, true);
 		rmq.awaitInitialization();
 		/*** then ***/
 
 		// Might fail if RabbitMqConsumerController#MAX_RETRIES < 3
-		verify(mockedChannel, times(3)).isOpen();
+		verify(mockedChannel, times(maxRetries)).isOpen();
 	}
 
 	@Test
 	public void awaitInitialization_notReadyInTime() {
-		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
-
-		/*** when ***/
+		/** given **/
 		when(rmq.getMaxRetries()).thenReturn(5);
-
 		when(mockedChannel.isOpen()).thenReturn(false, new Boolean[] { false, false, false });
 
+		/*** when ***/
 		rmq.awaitInitialization();
 		/*** then ***/
 		verify(mockedChannel, atLeast(rmq.getMaxRetries() + 1)).isOpen();
@@ -244,7 +234,6 @@ public class RabbitMqConsumerControllerTest {
 	@Test
 	public void handleDelivery_ackIsSent() throws IOException {
 		/*** given ***/
-		RabbitMqConsumerController rmq = createDefaultSpy();
 		@SuppressWarnings("unchecked")
 		OnMessageConsumption<Void> action = Mockito.mock(OnMessageConsumption.class);
 

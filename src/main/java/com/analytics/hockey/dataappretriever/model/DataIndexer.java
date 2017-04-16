@@ -20,11 +20,14 @@ public interface DataIndexer extends IsConnected {
 	 *            If true, delete index that matches the same name. If false, ignore
 	 *            operation.
 	 * @throws DataStoreException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	void createIndex(String indexName, boolean deleteOldIndexIfExists) throws DataStoreException, IOException;
 
 	void indexDocument(IsElasticsearchIndexable o) throws DataStoreException;
 
-	void deleteIndex(String indexName) throws DataStoreException; 
+	void indexDocument(String index, String type, IsElasticsearchIndexable indexableObject) throws DataStoreException;
+
+	void deleteIndex(String indexName) throws DataStoreException;
+
 }

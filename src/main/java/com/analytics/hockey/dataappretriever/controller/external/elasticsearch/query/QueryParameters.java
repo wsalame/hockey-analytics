@@ -42,8 +42,8 @@ public class QueryParameters {
 
 	private Integer size;
 	private Set<String> fields = new LinkedHashSet<>();
-	private RangeParameter range;
-	private SortParameter sort;
+	private RangeParameter range = new RangeParameter();
+	private SortParameter sort = new SortParameter();
 	private JsonFormatter formatter = GuiceInjector.get(JsonFormatter.class);
 
 	public Integer getSize() {

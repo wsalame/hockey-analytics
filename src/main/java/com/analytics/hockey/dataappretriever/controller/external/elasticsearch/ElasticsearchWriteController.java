@@ -9,26 +9,26 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.exists.types.TypesExistsResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.exception.DataStoreException;
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.GameElasticsearchField;
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.model.IsElasticsearchIndexable;
-import com.analytics.hockey.dataappretriever.model.DataIndexer;
+import com.analytics.hockey.dataappretriever.model.PropertyLoader;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ElasticsearchWriteController extends AbstractElasticsearchController implements DataIndexer {
+public class ElasticsearchWriteController extends AbstractElasticsearchWriteController {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
-
-	private final String INDEX_TYPE_SEPARATOR = "/"; // TODO Less ghetto way
+	private final String INDEX_TYPE_SEPARATOR = "/";
 
 	// We assume we will never delete an index during normal operations, so it is safe to
 	// store if the mapping already exists or not.
@@ -47,6 +47,11 @@ public class ElasticsearchWriteController extends AbstractElasticsearchControlle
 		        }
 	        });
 
+	@Inject
+	public ElasticsearchWriteController(PropertyLoader propertyLoader) {
+		this.propertyLoader = propertyLoader;
+	}
+
 	public ElasticsearchWriteController() {
 
 	}
@@ -56,12 +61,12 @@ public class ElasticsearchWriteController extends AbstractElasticsearchControlle
 	 */
 	@Override
 	public void createIndex(String indexName, boolean deleteOldIndexIfExists) throws IOException, DataStoreException {
-		final IndicesExistsResponse res = getClient().admin().indices().prepareExists(indexName).execute().actionGet();
-		if (res.isExists() && deleteOldIndexIfExists) {
+		boolean isExists = isExists(indexName); // Blocking call
+		if (isExists && deleteOldIndexIfExists) {
 			deleteIndex(indexName);
 		}
 
-		if (!res.isExists() || (res.isExists() && deleteOldIndexIfExists)) {
+		if (!isExists || (isExists && deleteOldIndexIfExists)) {
 			XContentBuilder settingsBuilder = null;
 			settingsBuilder = XContentFactory.jsonBuilder().startObject();
 
@@ -96,14 +101,15 @@ public class ElasticsearchWriteController extends AbstractElasticsearchControlle
 		}
 	}
 
+	private void putMapping(String index, String type, String mapping) {
+		getClient().admin().indices().preparePutMapping(index).setType(type).setSource(mapping).execute().actionGet(); // We
+	}
+
 	private void putMappingIfNotExists(String index, String type) {
 		try {
 			if (!gamesMappingParametersCache.get(index + INDEX_TYPE_SEPARATOR + type)) {
 				String mapping = ElasticsearchUtils.buildMappingParametersAsJson(GameElasticsearchField.values());
-				getClient().admin().indices().preparePutMapping(index).setType(type).setSource(mapping).execute()
-				        .actionGet(); // We want to wait for the mapping to be
-				                      // acknowledged and added to elasticsearch's
-				                      // internal buffer queue
+				putMapping(index, type, mapping);
 				gamesMappingParametersCache.put(index + INDEX_TYPE_SEPARATOR + type, true);
 			}
 		} catch (IOException | ExecutionException e) {
@@ -132,14 +138,24 @@ public class ElasticsearchWriteController extends AbstractElasticsearchControlle
 		final String index = indexableObject.buildIndex();
 		final String type = indexableObject.buildType();
 
+		indexDocument(index, type, indexableObject);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	@Override
+	public void indexDocument(String index, String type, IsElasticsearchIndexable indexableObject)
+	        throws DataStoreException {
 		try {
 			putMappingIfNotExists(index, type);
 			String documentAsJson = ElasticsearchUtils.toJson(indexableObject.buildDocument());
 
 			// Sending the document asynchronously
-			getClient().prepareIndex(index, type).setSource(documentAsJson).execute();
-
+			IndexRequestBuilder requestBuilder = getClient().prepareIndex(index, type).setSource(documentAsJson);
+			requestBuilder.execute();
 		} catch (Exception e) {
+			System.out.println("ERROR");
 			logger.error("Could not insert game in " + index + "/" + "type");
 			throw new DataStoreException("Could not insert game in " + index + "/" + "type");
 		}

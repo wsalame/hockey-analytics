@@ -33,4 +33,22 @@ public interface IsElasticsearchIndexable {
 	 * @return Elasticsearch type name where the document will be stored
 	 */
 	String buildType();
+
+	/**
+	 * Overrides default index's builder TODO Implement generic object that knows how to
+	 * build the index
+	 * 
+	 * @param index
+	 *            Index name to use
+	 */
+	// void setIndex(String index);
+
+	/**
+	 * Overrides default index's builder TODO Implement generic object that knows how to
+	 * build the type
+	 * 
+	 * @param type
+	 *            Type name to use
+	 */
+	// void setType(String type);
 }

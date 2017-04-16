@@ -37,7 +37,7 @@ public class PerOpponenentStatisticsExtractor {
 	 * pts). Filter the fields according to the request's body
 	 */
 	public PerOpponenentStatisticsExtractor generateWinsPerOpponent(QueryParameters queryParameters) {
-		InternalFilter byTeamAggratedInternalFilter = (InternalFilter) aggregations.get(mainAggName);
+		InternalFilter byTeamAggratedInternalFilter = (InternalFilter) aggregations.asMap().get(mainAggName);
 		Map<String, Aggregation> aggregationsMap = byTeamAggratedInternalFilter.getAggregations().asMap();
 		winsByTeamRelatedStats = mapWins((StringTerms) aggregationsMap.get(winsPerOpponentAggName), queryParameters);
 		return this;

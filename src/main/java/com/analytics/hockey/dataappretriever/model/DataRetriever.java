@@ -26,6 +26,8 @@ public interface DataRetriever extends IsConnected {
 	 */
 	String getTeams(String season, Map<String, Object> params) throws DataStoreException;
 
+	String getScores(String index, String type, Integer year, Integer month, Integer day, Map<String, Object> params) throws DataStoreException;
+
 	String getScores(Integer year, Integer month, Integer day, Map<String, Object> params) throws DataStoreException;
 
 	String getStats(String season, String team, Map<String, Object> params) throws DataStoreException;

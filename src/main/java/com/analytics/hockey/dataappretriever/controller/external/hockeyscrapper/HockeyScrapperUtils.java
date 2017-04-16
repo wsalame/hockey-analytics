@@ -2,7 +2,7 @@ package com.analytics.hockey.dataappretriever.controller.external.hockeyscrapper
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,14 +15,18 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class HockeyScrapperUtils {
-	private static final TypeReference<HashMap<String, Object>> mapObjectMapperTypeRef = new TypeReference<HashMap<String, Object>>() {
+	private static final TypeReference<LinkedHashMap<String, Object>> mapObjectMapperTypeRef = new TypeReference<LinkedHashMap<String, Object>>() {
 	};
-	
+
 	private static final TypeReference<List<Object>> listObjectMapperTypeRef = new TypeReference<List<Object>>() {
 	};
 
+	private HockeyScrapperUtils() {
 
-	public static List<Game> unmarshallGames(String responseAsJson) throws Exception {
+	}
+
+	public static List<Game> unmarshallGames(String responseAsJson)
+	        throws JsonParseException, JsonMappingException, IOException {
 		List<Game> games = null;
 
 		Map<String, Object> responseMap = responseToMap(responseAsJson);

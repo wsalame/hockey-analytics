@@ -1,11 +1,13 @@
 package com.analytics.hockey.dataappretriever.service;
 
+import static spark.Spark.after;
 import static spark.Spark.before;
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.path;
 
 import java.net.HttpURLConnection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +24,6 @@ import com.google.inject.Inject;
 import spark.Request;
 import spark.Route;
 import spark.Spark;
-
 public class RestService implements ExposedApiService {
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
@@ -51,27 +52,42 @@ public class RestService implements ExposedApiService {
 
 		initFaviconIcon();
 
-		initBefore();
+		before("/*", (req, res) -> {
+			logger.info("Requested route : " + req.pathInfo());
+		});
 
-		path("/api/v1/nhl", () -> {
-			initBeforeNhl();
-
-			get("/:season", (request, response) -> {
-				try {
-					response.status(200);
-					response.type("application/json");
-
-					String api = "/api/v1/nhl/2005/teams";
-
-					return api;
-				} catch (Exception e) {
-					logger.error(e.toString(), e);
-					response.status(HttpURLConnection.HTTP_BAD_REQUEST);
-					return MALFORMED_REQUEST_OUPUT;
+		path("/api/nhl/v1", () -> {
+			/*
+			 * /api/v1/nhl/
+			 */
+			before((req, res) -> {
+				boolean authenticated = true;
+				if (!authenticated) {
+					halt(401, "Please connect"); // TODO redirect to login page
 				}
 			});
 
-			initSeasonPath();
+			after((req, res) -> {
+				res.type("application/json");
+//				res.status(200);
+			});
+
+			path("/teams", () -> {
+				get("", nhlTeamsBySeasonRoute);
+				get("/:season", nhlTeamsBySeasonRoute);
+			});
+			
+			path("/stats", () -> {
+				get("", nhlStatsBySeasonRoute);
+				get("/:season", nhlStatsBySeasonRoute);
+				get("/:season/:team", nhlStatsBySeasonRoute);
+			});
+			
+			path("/scores", () -> {
+				get("/:year", nhlScoresRoute);
+				get("/:year/:month", nhlScoresRoute);
+				get("/:year/:month/:day", nhlScoresRoute);
+			});
 		});
 	}
 
@@ -94,6 +110,7 @@ public class RestService implements ExposedApiService {
 	@Override
 	public void awaitInitialization() {
 		Spark.awaitInitialization();
+		logger.info("Spark is ready on localhost:" + Spark.port());
 		System.out.println("Spark is ready on localhost:" + Spark.port());
 	}
 
@@ -102,6 +119,40 @@ public class RestService implements ExposedApiService {
 			return "";
 		});
 	}
+	
+	Route nhlScoresRoute = (request, response) -> {
+		try {
+			Integer year = request.params(":month") != null ? Integer.parseInt(request.params(":year")) : null;
+			Integer month = request.params(":month") != null ? Integer.parseInt(request.params(":month")) : null;
+			Integer day = request.params(":day") != null ? Integer.parseInt(request.params(":day")) : null;
+			
+			String scores = dataRetriever.getScores(year, month, day, Collections.emptyMap());
+//			String teamNames = getTeamNames(request.params(":season"));
+			response.status(200);
+			response.type("application/json");
+
+			return outputPrettyIfNecessary(request, scores);
+		} catch (Exception e) {
+			logger.error(e.toString(), e);
+			response.status(HttpURLConnection.HTTP_BAD_REQUEST);
+			return MALFORMED_REQUEST_OUPUT;
+		}
+	};
+	
+	Route nhlStatsBySeasonRoute = (request, response) -> {
+		try {
+			String stats = dataRetriever.getStats(request.params(":season"), request.params(":team"), Collections.emptyMap());
+//			String teamNames = getTeamNames(request.params(":season"));
+			response.status(200);
+			response.type("application/json");
+
+			return outputPrettyIfNecessary(request, stats);
+		} catch (Exception e) {
+			logger.error(e.toString(), e);
+			response.status(HttpURLConnection.HTTP_BAD_REQUEST);
+			return MALFORMED_REQUEST_OUPUT;
+		}
+	};
 
 	Route nhlTeamsBySeasonRoute = (request, response) -> {
 		try {
@@ -117,36 +168,6 @@ public class RestService implements ExposedApiService {
 		}
 	};
 
-	private void initSeasonPath() {
-		/*
-		 * /api/v1/nhl/:season
-		 */
-		path("/:season", () -> {
-			/*
-			 * /api/v1/nhl/:season/teams
-			 */
-			get("/teams", nhlTeamsBySeasonRoute);
-		});
-	}
-
-	private void initBefore() {
-		before("/*", (req, res) -> {
-			logger.info("Requested route : " + req.pathInfo());
-		});
-	}
-
-	private void initBeforeNhl() {
-		/*
-		 * /api/v1/nhl/
-		 */
-		before("/*", (req, res) -> {
-			boolean authenticated = true;
-			if (!authenticated) {
-				halt(401, "Please connect"); // TODO redirect to login page
-			}
-		});
-	}
-
 	private String outputPrettyIfNecessary(Request request, String output) throws JsonException {
 		return request.queryParams("pretty") == null ? output : jsonFormatter.toPrettyJson(output, 2);
 	}
@@ -156,7 +177,7 @@ public class RestService implements ExposedApiService {
 	 */
 	@Override
 	public String getTeamNames(String season) throws Exception {
-		return dataRetriever.getTeams(season, null);
+		return dataRetriever.getTeams(season, Collections.emptyMap());
 	}
 
 	/**

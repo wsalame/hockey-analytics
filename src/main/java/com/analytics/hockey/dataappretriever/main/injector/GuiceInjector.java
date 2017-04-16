@@ -30,4 +30,8 @@ public class GuiceInjector {
 	public void install(AbstractModule module) {
 		injector = Guice.createInjector(module);
 	}
+	
+	public Injector getInjector(){
+		return this.injector;
+	}
 }

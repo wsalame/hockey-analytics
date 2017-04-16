@@ -104,9 +104,8 @@ public class InitServices {
 				// Object>>() {
 				// });
 				//
-				// String statsWins = dataRetriever.getStats("2006-2007", "Montreal
-				// Canadiens", map);
-				// System.out.println(statsWins);
+//				 String statsWins = dataRetriever.getStats("2006-2007", "Montreal Canadiens", Collections.emptyMap());
+//				 System.out.println(statsWins);
 			} else {
 				throwCouldNotStartServices(failedServices);
 			}
@@ -118,7 +117,7 @@ public class InitServices {
 
 	private void initConsummation() throws IOException, DataStoreException {
 //		consumeTeams();
-		consumeGames();
+//		consumeGames();
 	}
 
 	private void throwCouldNotStartServices(List<IsConnected> failedServices) {
@@ -147,9 +146,9 @@ public class InitServices {
 
 //		String url = "http://localhost:8989/nhl/v1/season/2005-2006";
 //		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
-
-		String url = "http://localhost:8989/nhl/v1/season/2006-2007";
-		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
+//
+//		String url = "http://localhost:8989/nhl/v1/season/2006-2007";
+//		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
 	}
 
 	private void consumeTeams() throws IOException, DataStoreException {
@@ -171,9 +170,9 @@ public class InitServices {
 			}
 		});
 
-		 String url = "http://localhost:8989/nhl/v1/teams";
-		 hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url,
-		 HttpVerb.GET).build());
+//		 String url = "http://localhost:8989/nhl/v1/teams";
+//		 hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url,
+//		 HttpVerb.GET).build());
 	}
 
 	private Map<String, Team> mappingNames = new HashMap<>();

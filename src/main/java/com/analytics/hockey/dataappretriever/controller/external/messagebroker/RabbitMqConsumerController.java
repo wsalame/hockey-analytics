@@ -39,6 +39,7 @@ public class RabbitMqConsumerController implements MessageConsumer {
 		MAX_RETRIES = propertyLoader.getPropertyAsInteger(PropertyConstant.RMQ_MAX_RETRIES.toString());
 	}
 
+	@VisibleForTesting
 	public RabbitMqConsumerController() {
 		TIMEOUT_CLOSE_CONNECTION = -1;
 		MAX_RETRIES = 3;

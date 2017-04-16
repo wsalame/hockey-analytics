@@ -3,6 +3,18 @@ language: java
 jdk:
         - oraclejdk8
 
+env:
+        - ES_VERSION=2.4.0
+
+install:
+  - wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.0/elasticsearch-2.4.0.tar.gz
+  - tar -xzf elasticsearch-2.4.0.tar.gz
+  - ./elasticsearch-2.4.0/bin/elasticsearch &
+  
+script:
+        - wget -q --waitretry=1 --retry-connrefused -T 10 -O - http://127.0.0.1:9200
+        - mvn test -B
+ 
 notifications:
         on_success: never
         on_failure: always

@@ -55,7 +55,7 @@ public class TransportClientFactory {
 
 	/**
 	 * Cluster could be connectable, but in an invalid state. This verifies that there are
-	 * at least 1 node connectable.
+	 * at least 1 node available.
 	 * 
 	 * @param client
 	 *            Client that will be used to connect to the cluster

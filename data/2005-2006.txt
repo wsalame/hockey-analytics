@@ -1,4 +1,3 @@
-Spark is ready on localhost:4567
 {"year": 2005, "games": [], "day": 1, "month": 10}
 {"year": 2006, "games": [{"home_team": "Buffalo Sabres", "score_loser": 1, "winner_team": "Florida Panthers", "loser_team": "Buffalo Sabres", "score_winner": 2, "is_row": true}, {"home_team": "Nashville Predators", "score_loser": 2, "winner_team": "Mighty Ducks of Anaheim", "loser_team": "Nashville Predators", "score_winner": 4, "is_row": true}, {"home_team": "Washington Capitals", "score_loser": 2, "winner_team": "Atlanta Thrashers", "loser_team": "Washington Capitals", "score_winner": 5, "is_row": true}], "day": 1, "month": 1}
 {"year": 2005, "games": [], "day": 2, "month": 10}

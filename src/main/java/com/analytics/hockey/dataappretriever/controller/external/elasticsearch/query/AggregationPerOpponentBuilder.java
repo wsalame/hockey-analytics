@@ -21,7 +21,7 @@ public class AggregationPerOpponentBuilder extends TermsBuilder {
 
 	public AggregationPerOpponentBuilder(String aggName, GameElasticsearchField groupBy, StatsField aggFieldName,
 	        GameElasticsearchField sumField) {
-		super(aggFieldName.getFieldName());
+		super(aggName);
 		field(groupBy.getJsonFieldName())
 		        .subAggregation(AggregationBuilders.sum(getName()).field(sumField.getJsonFieldName()));
 	}

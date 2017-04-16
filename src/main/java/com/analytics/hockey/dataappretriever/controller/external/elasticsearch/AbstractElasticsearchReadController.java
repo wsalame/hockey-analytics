@@ -40,7 +40,9 @@ public abstract class AbstractElasticsearchReadController extends AbstractElasti
 		Arrays.asList(response.getHits().hits()).stream()
 		        .forEach(x -> sb.append(x.getSourceAsString()).append(separator));
 
-		sb.delete(sb.length() - separator.length(), sb.length());
+		if(response.getHits().hits().length > 0){
+			sb.delete(sb.length() - separator.length(), sb.length());
+		}
 		return sb.toString();
 	}
 

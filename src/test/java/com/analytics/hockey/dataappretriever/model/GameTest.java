@@ -1,4 +1,4 @@
-package com.analytics.hockey.dataappretriever.controller.external.elasticsearch;
+package com.analytics.hockey.dataappretriever.model;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,16 +7,13 @@ import java.time.LocalDate;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.analytics.hockey.dataappretriever.model.Game;
-import com.analytics.hockey.dataappretriever.model.Team;
-
 /**
  * 
  * Every season goes from October (month = 10) to April (month = 4) the following year
  *
  */
-public class ElasticsearchTest { // TODO rename class name
-
+public class GameTest { // TODO rename class name
+	
 	@Test
 	public void buildGameIndex_lastMonthOfFirstYear() {
 		Game g = new Game(LocalDate.of(2015, 12, 31));
@@ -59,7 +56,7 @@ public class ElasticsearchTest { // TODO rename class name
 		// then
 		Mockito.verify(mockedGame).buildType(month);
 	}
-	
+
 	@Test
 	public void buildGameTypeIndex_isCallingBuildIndexWithPrimitivesTypesExtractedFromGameObject() {
 		// We are making sure #buildType() is calling the overloaded function
@@ -78,17 +75,4 @@ public class ElasticsearchTest { // TODO rename class name
 		// then
 		Mockito.verify(mockedGame).buildGamesIndex(year, month);
 	}
-
-	//TODO Separer dans different test suit. test pour team
-	@Test
-	public void buildTeamIndex_returnsDefaultValue() {
-		assertEquals(new Team().buildIndex(), "teams");
-	}
-
-	@Test
-	public void buildTeamType_returnsDefaultValue() {
-		assertEquals(new Team().buildType(), "teams");
-	}
-
-	
 }

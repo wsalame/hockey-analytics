@@ -5,14 +5,15 @@ import java.io.IOException;
 import com.analytics.hockey.dataappretriever.exception.JsonException;
 import com.analytics.hockey.dataappretriever.model.JsonFormatter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Singleton;
 
 @Singleton
 public class DefaultJsonFormatter implements JsonFormatter {
-	private final ObjectMapper mapper = new ObjectMapper();
-	private final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
+	private final ObjectMapper defaultMapper = new ObjectMapper();
+	private final ObjectMapper prettyMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
 	/**
 	 * @inheritDoc
@@ -20,7 +21,7 @@ public class DefaultJsonFormatter implements JsonFormatter {
 	@Override
 	public String toJson(Object o) throws JsonException {
 		try {
-			return mapper.writeValueAsString(o);
+			return defaultMapper.writeValueAsString(o);
 		} catch (JsonProcessingException e) {
 			throw new JsonException(e.toString(), e);
 		}
@@ -39,10 +40,19 @@ public class DefaultJsonFormatter implements JsonFormatter {
 	 */
 	@Override
 	public String toPrettyJson(String json, int indent) throws JsonException {
+		String validJson = !isInEnveloppe(json) ? wrapInEnveloppe(json) : json;
 		try {
-			return writer.writeValueAsString(mapper.readValue(json, Object.class));
+			return prettyMapper.writeValueAsString(prettyMapper.readValue(validJson, JsonNode.class));
 		} catch (IOException e) {
 			throw new JsonException(e.toString(), e);
 		}
+	}
+
+	private String wrapInEnveloppe(String json) {
+		return "[" + json + "]";
+	}
+
+	private boolean isInEnveloppe(String json) {
+		return json.startsWith("[") && json.endsWith("]");
 	}
 }

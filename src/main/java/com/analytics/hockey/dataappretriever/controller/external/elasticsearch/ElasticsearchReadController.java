@@ -26,10 +26,13 @@ import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.m
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.query.AggregationPerOpponentBuilder;
 import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.query.QueryParameters;
 import com.analytics.hockey.dataappretriever.exception.JsonException;
+import com.analytics.hockey.dataappretriever.main.PropertyConstant;
 import com.analytics.hockey.dataappretriever.model.Game;
 import com.analytics.hockey.dataappretriever.model.HasDataStatistics;
+import com.analytics.hockey.dataappretriever.model.PropertyLoader;
 import com.analytics.hockey.dataappretriever.model.StatsField;
 import com.analytics.hockey.dataappretriever.model.Team;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -41,10 +44,19 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 	private final Logger logger = LogManager.getLogger(this.getClass());
 	private final HasDataStatistics statsLoader;
 	private final int DEFAULT_SIZE = 10;
+	private final int MAX_WINDOW_SIZE;
 
 	@Inject
-	public ElasticsearchReadController(HasDataStatistics statsLoader) {
+	public ElasticsearchReadController(HasDataStatistics statsLoader, PropertyLoader propertyLoader) {
 		this.statsLoader = statsLoader;
+		this.propertyLoader = propertyLoader;
+		this.MAX_WINDOW_SIZE = propertyLoader.getPropertyAsInteger(PropertyConstant.ES_MAX_WINDOW_SIZE.toString());
+	}
+	
+	@VisibleForTesting
+	ElasticsearchReadController(){
+		this.statsLoader = null;
+		this.MAX_WINDOW_SIZE = -1;
 	}
 
 	/**
@@ -61,10 +73,10 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		// 2007-2007, it was the "Coyotes Phoenix", and not "Coyotes Arizona"
 		if (season != null) {
 			TermsBuilder agg = AggregationBuilders.terms("unique_teams")
-			        .field(GameElasticsearchField.HOME_TEAM.getJsonFieldName());
+			        .field(GameElasticsearchField.HOME_TEAM.getJsonFieldName())
+			        .size(Optional.ofNullable(queryParameters.getSize()).orElse(statsLoader.getNumberOfTeams()));
 
-			SearchRequestBuilder fullQuery = getClient().prepareSearch(season).addAggregation(agg).setQuery(qb)
-			        .setSize(Optional.ofNullable(queryParameters.getSize()).orElse(statsLoader.getNumberOfTeams()));
+			SearchRequestBuilder fullQuery = getClient().prepareSearch(season).addAggregation(agg).setQuery(qb);
 
 			SearchResponse response = executeActionGet(fullQuery);
 
@@ -78,7 +90,8 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		} else {
 			// Otherwise return all time names, where an object will have both the current
 			// name and the past names
-			SearchRequestBuilder fullQuery = getClient().prepareSearch(new Team().buildIndex()).setQuery(qb);
+			SearchRequestBuilder fullQuery = getClient().prepareSearch(new Team().buildIndex()).setQuery(qb)
+			        .setSize(Optional.ofNullable(queryParameters.getSize()).orElse(statsLoader.getNumberOfTeams()));
 
 			SearchResponse response = executeActionGet(fullQuery);
 
@@ -88,22 +101,50 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		}
 	}
 
+	private int getSizeOrDefault(QueryParameters queryParameters, int defaultSize) {
+		return Optional.ofNullable(queryParameters.getSize()).orElse(defaultSize);
+	}
+	
 	/**
 	 * @inheritDoc
 	 */
 	@Override
-	public String getScores(Integer year, Integer month, Integer day, Map<String, Object> params) {
+	public String getScores(Integer year, Integer month, Integer day, Map<String, Object> params) throws DataStoreException {
 		final String index = new Game().buildGamesIndex(year, month);
 		final String type = new Game().buildType(month);
+		
+		return getScores(index, type, year, month, day, params);
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	@Override
+	public String getScores(String index, String type, Integer year, Integer month, Integer day, Map<String, Object> params)
+	        throws DataStoreException {
+		QueryParameters queryParameters = QueryParameters.toQueryParameters(params);
 
 		SearchResponse response = getClient().prepareSearch(index).setTypes(type)
-		        .setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
-
-		int estimatedTotalCapacity = statsLoader
-		        .getAverageNumberOfGamesForGivenDay(LocalDate.of(year, month, day).getDayOfWeek().ordinal())
-		        * statsLoader.getAverageGameDocumentCharacters();
-
-		return joinSourceHits(response, separator, estimatedTotalCapacity);
+		        .setSize(getSizeOrDefault(queryParameters, MAX_WINDOW_SIZE)).setQuery(QueryBuilders.matchAllQuery())
+		        .execute().actionGet();
+		
+		return joinSourceHits(response, separator, estimateTotalCapacity(year, month, day));
+	}
+	
+	/**
+	 * @see {@link HasDataStatistics}
+	 */
+	private int estimateTotalCapacity(Integer year, Integer month, Integer day){
+		int estimatedTotalCapacity;
+		if (month != null && day != null) {
+			estimatedTotalCapacity = statsLoader
+			        .getAverageNumberOfGamesForGivenDay(LocalDate.of(year, month, day).getDayOfWeek().ordinal())
+			        * statsLoader.getAverageGameDocumentCharacters();
+		} else {
+			estimatedTotalCapacity = 5000; // TODO
+		}
+		
+		return estimatedTotalCapacity;
 	}
 
 	// TODO good edge case season 2005 de 1 oct a 15 oct pour Nashville. ca doit donner
@@ -164,8 +205,9 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		                .sizeIfRequired(queryParameters, DEFAULT_SIZE).sortIfRequired(queryParameters);
 
 		TermsBuilder winsAggBuilder = new AggregationPerOpponentBuilder(WINS_BY_TEAM_AGG_NAME,
-		        GameElasticsearchField.LOSER_TEAM, StatsField.WINS, GameElasticsearchField.IS_REGULATION_OR_OVERTIME_WIN)
-		                .sizeIfRequired(queryParameters, DEFAULT_SIZE).sortIfRequired(queryParameters);
+		        GameElasticsearchField.LOSER_TEAM, StatsField.WINS,
+		        GameElasticsearchField.IS_REGULATION_OR_OVERTIME_WIN).sizeIfRequired(queryParameters, DEFAULT_SIZE)
+		                .sortIfRequired(queryParameters);
 
 		FilterAggregationBuilder byTeamAgg = AggregationBuilders.filter(BY_TEAM_MAIN_AGG)
 		        .filter(QueryBuilders.termQuery(GameElasticsearchField.WINNER_TEAM.getJsonFieldName(), team))
@@ -183,9 +225,10 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		 * Extraction of the aggregations
 		 ******************************/
 		// Per opponent stats
-		Map<String, Object> statsPerOpponent = new PerOpponenentStatisticsExtractor(BY_TEAM_MAIN_AGG, GOALS_BY_TEAM_AGG_NAME,
-		        WINS_BY_TEAM_AGG_NAME, searchResponse.getAggregations()).generateGoalsPerOpponent(queryParameters)
-		                .generateWinsPerOpponent(queryParameters).buildStats();
+		Map<String, Object> statsPerOpponent = new PerOpponenentStatisticsExtractor(BY_TEAM_MAIN_AGG,
+		        GOALS_BY_TEAM_AGG_NAME, WINS_BY_TEAM_AGG_NAME, searchResponse.getAggregations())
+		                .generateGoalsPerOpponent(queryParameters).generateWinsPerOpponent(queryParameters)
+		                .buildStats();
 
 		Map<String, Object> outerMap = new LinkedHashMap<>();
 
@@ -203,7 +246,7 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 			throw new DataStoreException("Error serializing the results");
 		}
 	}
-	
+
 	/**
 	 * @inheritDoc
 	 */

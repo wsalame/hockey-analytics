@@ -13,9 +13,10 @@ public enum PropertyConstant {
 	HOCKEY_SCRAPPER_PORT("hockeyScrapper.port"),
     // Elasticsearch cluster
 	ES_HOST("es.host"),
-	ES_PORT("es.port"),
+	ES_TRANSPORT_PORT("es.transport.port"),
 	ES_NUMBER_SHARDS("es.numberOfShards"),
 	ES_NUMBER_REPLICAS("es.numberOfReplicas"),
+	ES_MAX_WINDOW_SIZE("es.windowSize"),
     // Spark
 	SPARK_HOST("spark.host"),
 	SPARK_PORT("spark.port");
