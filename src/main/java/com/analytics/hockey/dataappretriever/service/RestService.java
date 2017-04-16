@@ -9,6 +9,8 @@ import static spark.Spark.path;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,6 +42,17 @@ public class RestService implements ExposedApiService {
 		this.propertyLoader = propertyLoader;
 	}
 
+	Route loginRoute = (request, response) -> {
+		UUID sessionId = UUID.randomUUID();
+		request.session().attribute("state", sessionId.toString());
+		return request;
+	};
+	
+	Route callbackRoute = (req, response) -> {
+		System.out.println("CB " + Optional.ofNullable(req.session().attribute("state")).orElse("NULL"));
+		return Optional.ofNullable(req.session().attribute("state")).orElse("NULL");
+	};
+	
 	/**
 	 * @inheritDoc
 	 */
@@ -47,14 +60,24 @@ public class RestService implements ExposedApiService {
 	public void start() {
 		Spark.ipAddress(propertyLoader.getProperty(PropertyConstant.SPARK_HOST.toString()).intern());
 		Spark.port(propertyLoader.getPropertyAsInteger(PropertyConstant.SPARK_PORT.toString()));
-
+		Spark.staticFileLocation("/public");
 		// TODO use websockets ?
 
 		initFaviconIcon();
 
 		before("/*", (req, res) -> {
 			logger.info("Requested route : " + req.pathInfo());
+		
 		});
+		
+		get("/sup", (req, res) -> {
+			System.out.println("SUP !!");
+			return Optional.ofNullable(req.session().attribute("state")).orElse("NULL");
+		});
+		
+		get("/login", loginRoute);
+		
+		get("/oauth", callbackRoute);
 
 		path("/api/nhl/v1", () -> {
 			/*
@@ -139,6 +162,9 @@ public class RestService implements ExposedApiService {
 		}
 	};
 	
+	
+	
+		//TODO deplacer
 	Route nhlStatsBySeasonRoute = (request, response) -> {
 		try {
 			String stats = dataRetriever.getStats(request.params(":season"), request.params(":team"), Collections.emptyMap());

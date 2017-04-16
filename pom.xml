@@ -30,6 +30,9 @@
 		<sparkjava.version>2.5.5</sparkjava.version>
 		<asyncHttpClient.version>2.0.30</asyncHttpClient.version>
 		<rabbitmq.version>4.1.0</rabbitmq.version>
+
+		<!-- Templates -->
+
 	</properties>
 
 	<build>
@@ -48,6 +51,13 @@
 	</build>
 
 	<dependencies>
+
+		<dependency>
+			<groupId>com.sparkjava</groupId>
+			<artifactId>spark-template-freemarker</artifactId>
+			<version>2.5.5</version>
+		</dependency>
+
 		<!-- For unit tests -->
 		<dependency>
 			<groupId>junit</groupId>
