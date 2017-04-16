@@ -6,8 +6,10 @@ import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.path;
 
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,9 +25,16 @@ import com.analytics.hockey.dataappretriever.model.JsonFormatter;
 import com.analytics.hockey.dataappretriever.model.PropertyLoader;
 import com.google.inject.Inject;
 
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.Version;
+import spark.ModelAndView;
 import spark.Request;
+import spark.Response;
 import spark.Route;
 import spark.Spark;
+import spark.template.freemarker.FreeMarkerEngine;
+
 public class RestService implements ExposedApiService {
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
@@ -42,17 +51,23 @@ public class RestService implements ExposedApiService {
 		this.propertyLoader = propertyLoader;
 	}
 
-	Route loginRoute = (request, response) -> {
-		UUID sessionId = UUID.randomUUID();
-		request.session().attribute("state", sessionId.toString());
-		return request;
-	};
-	
+	// Route loginRoute = (request, response) -> {
+	// UUID sessionId = UUID.randomUUID();
+	// request.session().attribute("sessionId", sessionId.toString());
+	//
+	// Map<String, Object> attributes = new HashMap<>();
+	// attributes.put("sessionId", sessionId.toString());
+	// attributes.put("clientId",
+	// "717459441893-u56hh7e62dfdbf9t17aof59necvd7256.apps.googleusercontent.com");
+	//
+	// return new ModelAndView(attributes, "index.ftl");
+	// };
+
 	Route callbackRoute = (req, response) -> {
 		System.out.println("CB " + Optional.ofNullable(req.session().attribute("state")).orElse("NULL"));
 		return Optional.ofNullable(req.session().attribute("state")).orElse("NULL");
 	};
-	
+
 	/**
 	 * @inheritDoc
 	 */
@@ -60,23 +75,44 @@ public class RestService implements ExposedApiService {
 	public void start() {
 		Spark.ipAddress(propertyLoader.getProperty(PropertyConstant.SPARK_HOST.toString()).intern());
 		Spark.port(propertyLoader.getPropertyAsInteger(PropertyConstant.SPARK_PORT.toString()));
-		Spark.staticFileLocation("/public");
+
+		final Configuration configuration = new Configuration(new Version(2, 3, 23));
+		configuration.setClassForTemplateLoading(RestService.class, "/");
+
 		// TODO use websockets ?
 
 		initFaviconIcon();
 
 		before("/*", (req, res) -> {
 			logger.info("Requested route : " + req.pathInfo());
-		
+
 		});
-		
+
 		get("/sup", (req, res) -> {
 			System.out.println("SUP !!");
 			return Optional.ofNullable(req.session().attribute("state")).orElse("NULL");
 		});
-		
-		get("/login", loginRoute);
-		
+
+		get("/login", (request, response) -> {
+			UUID sessionId = UUID.randomUUID();
+			request.session().attribute("sessionId", sessionId.toString());
+
+			Map<String, Object> attributes = new HashMap<>();
+			attributes.put("sessionId", sessionId.toString());
+			attributes.put("clientId", "717459441893-u56hh7e62dfdbf9t17aof59necvd7256.apps.googleusercontent.com");
+			
+			try {
+				StringWriter writer = new StringWriter();
+				Template resultTemplate = configuration.getTemplate("templates/index.ftl");
+
+				resultTemplate.process(attributes, writer);
+				return writer.toString();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return "hi";
+		});
+
 		get("/oauth", callbackRoute);
 
 		path("/api/nhl/v1", () -> {
@@ -92,20 +128,20 @@ public class RestService implements ExposedApiService {
 
 			after((req, res) -> {
 				res.type("application/json");
-//				res.status(200);
+				// res.status(200);
 			});
 
 			path("/teams", () -> {
 				get("", nhlTeamsBySeasonRoute);
 				get("/:season", nhlTeamsBySeasonRoute);
 			});
-			
+
 			path("/stats", () -> {
 				get("", nhlStatsBySeasonRoute);
 				get("/:season", nhlStatsBySeasonRoute);
 				get("/:season/:team", nhlStatsBySeasonRoute);
 			});
-			
+
 			path("/scores", () -> {
 				get("/:year", nhlScoresRoute);
 				get("/:year/:month", nhlScoresRoute);
@@ -142,15 +178,15 @@ public class RestService implements ExposedApiService {
 			return "";
 		});
 	}
-	
+
 	Route nhlScoresRoute = (request, response) -> {
 		try {
 			Integer year = request.params(":month") != null ? Integer.parseInt(request.params(":year")) : null;
 			Integer month = request.params(":month") != null ? Integer.parseInt(request.params(":month")) : null;
 			Integer day = request.params(":day") != null ? Integer.parseInt(request.params(":day")) : null;
-			
+
 			String scores = dataRetriever.getScores(year, month, day, Collections.emptyMap());
-//			String teamNames = getTeamNames(request.params(":season"));
+			// String teamNames = getTeamNames(request.params(":season"));
 			response.status(200);
 			response.type("application/json");
 
@@ -161,14 +197,13 @@ public class RestService implements ExposedApiService {
 			return MALFORMED_REQUEST_OUPUT;
 		}
 	};
-	
-	
-	
-		//TODO deplacer
+
+	// TODO deplacer
 	Route nhlStatsBySeasonRoute = (request, response) -> {
 		try {
-			String stats = dataRetriever.getStats(request.params(":season"), request.params(":team"), Collections.emptyMap());
-//			String teamNames = getTeamNames(request.params(":season"));
+			String stats = dataRetriever.getStats(request.params(":season"), request.params(":team"),
+			        Collections.emptyMap());
+			// String teamNames = getTeamNames(request.params(":season"));
 			response.status(200);
 			response.type("application/json");
 
