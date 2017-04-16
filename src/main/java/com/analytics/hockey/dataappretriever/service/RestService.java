@@ -2,7 +2,7 @@ package com.analytics.hockey.dataappretriever.service;
 
 import static spark.Spark.after;
 import static spark.Spark.before;
-import static spark.Spark.get;
+import static spark.Spark.*;
 import static spark.Spark.halt;
 import static spark.Spark.path;
 
@@ -61,8 +61,10 @@ public class RestService implements ExposedApiService {
 	// };
 
 	Route callbackRoute = (req, response) -> {
-		System.out.println("CB " + Optional.ofNullable(req.session().attribute("state")).orElse("NULL"));
-		return Optional.ofNullable(req.session().attribute("state")).orElse("NULL");
+		String sessionId  = req.params("callback");
+		req.session().attribute("sessionId", sessionId);
+		System.out.println("SESSION ID : " + sessionId);
+		return "hi";
 	};
 
 	/**
@@ -84,10 +86,13 @@ public class RestService implements ExposedApiService {
 			logger.info("Requested route : " + req.pathInfo());
 
 		});
+		
+		
+		post("/oauth", callbackRoute);
 
 		get("/sup", (req, res) -> {
 			System.out.println("SUP !!");
-			return Optional.ofNullable(req.session().attribute("state")).orElse("NULL");
+			return Optional.ofNullable(req.session().attribute("sessionId")).orElse("NULL");
 		});
 
 		get("/login", (request, response) -> {
@@ -110,7 +115,18 @@ public class RestService implements ExposedApiService {
 			return "hi";
 		});
 
-		get("/oauth", callbackRoute);
+		
+		after((req, res) -> {
+			
+			res.header("Expires", "Tue, 03 Jul 2001 06:00:00 GMT");
+			res.header("Last-Modified", "{now} GMT");
+			res.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+			res.header("Pragma", "no-cache");
+			res.header("", "");
+
+			// res.status(200);
+		});
+		
 
 		path("/api/nhl/v1", () -> {
 			/*

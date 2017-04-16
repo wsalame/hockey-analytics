@@ -22,7 +22,7 @@
         if (isAuthorized(authResult)) {
             // Hide the sign-in button now that the user is authorized
             $('#signinButton').attr('style', 'display: none');
-            // Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect back to the main restaurants page
+            // Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect
             $.ajax({
                 type: 'POST',
                 url: '/oauth?callback=${sessionId}',
@@ -35,7 +35,7 @@
                         $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
                         setTimeout(function () {
                             window.location.href = "/sup";
-                        }, 8000);
+                        }, 1000);
 
                     } else if (authResult['error']) {
                         console.log('There was an error: ' + authResult['error']);
@@ -45,7 +45,11 @@
                 }
 
             });
-        }
+        }else{
+				alert("chou NOT authorized");
+
+		}
+		
     }
 </script>
 
