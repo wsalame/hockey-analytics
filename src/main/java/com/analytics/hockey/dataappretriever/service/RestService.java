@@ -8,6 +8,7 @@ import static spark.Spark.path;
 
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,11 +61,25 @@ public class RestService implements ExposedApiService {
 	// return new ModelAndView(attributes, "index.ftl");
 	// };
 
-	Route callbackRoute = (req, response) -> {
-		String sessionId  = req.params("callback");
-		req.session().attribute("sessionId", sessionId);
-		System.out.println("SESSION ID : " + sessionId);
-		return "hi";
+	private void print(Object o) {
+		System.out.println(o.toString());
+	}
+
+	Route callbackRoute = (request, response) -> {
+		String sessionId = request.queryMap().get("callback").value();
+
+		String key = request.body();
+		print(request.body());
+		if (sessionId.equals(request.session().attribute("sessionId"))) {
+//			GoogleOAuth.run();
+			return "AUTHORIZED";
+		}
+		String secret = "OxSHkwxmyx67p5CI1n9MzZah";
+
+		
+
+		halt(401, "Please connect");
+		return "PLEASE DON'T TRY HACKING ME";
 	};
 
 	/**
@@ -87,7 +102,8 @@ public class RestService implements ExposedApiService {
 
 		});
 		
-		
+		post("/Callback", callbackRoute);
+
 		post("/oauth", callbackRoute);
 
 		get("/sup", (req, res) -> {
@@ -96,13 +112,14 @@ public class RestService implements ExposedApiService {
 		});
 
 		get("/login", (request, response) -> {
-			UUID sessionId = UUID.randomUUID();
-			request.session().attribute("sessionId", sessionId.toString());
+			UUID sessionUUID = UUID.randomUUID();
+			String sessionId = sessionUUID.toString().intern();
+			request.session().attribute("sessionId", sessionId);
 
 			Map<String, Object> attributes = new HashMap<>();
-			attributes.put("sessionId", sessionId.toString());
+			attributes.put("sessionId", sessionId);
 			attributes.put("clientId", "717459441893-u56hh7e62dfdbf9t17aof59necvd7256.apps.googleusercontent.com");
-			
+
 			try {
 				StringWriter writer = new StringWriter();
 				Template resultTemplate = configuration.getTemplate("templates/index.ftl");
@@ -115,9 +132,8 @@ public class RestService implements ExposedApiService {
 			return "hi";
 		});
 
-		
 		after((req, res) -> {
-			
+
 			res.header("Expires", "Tue, 03 Jul 2001 06:00:00 GMT");
 			res.header("Last-Modified", "{now} GMT");
 			res.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
@@ -126,7 +142,6 @@ public class RestService implements ExposedApiService {
 
 			// res.status(200);
 		});
-		
 
 		path("/api/nhl/v1", () -> {
 			/*

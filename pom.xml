@@ -50,6 +50,15 @@
 	</build>
 
 	<dependencies>
+
+
+		<dependency>
+			<groupId>com.google.oauth-client</groupId>
+			<artifactId>google-oauth-client</artifactId>
+			<version>1.22.0</version>
+		</dependency>
+
+
 		<!-- For unit tests -->
 		<dependency>
 			<groupId>junit</groupId>
