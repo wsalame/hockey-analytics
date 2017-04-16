@@ -24,14 +24,13 @@
 		<jackson.version>2.8.7</jackson.version>
 		<log4j.version>2.8.1</log4j.version>
 		<guava.version>21.0</guava.version>
+		<spark.freemarker.version>2.5.5</spark.freemarker.version>
 
 		<!-- Major projects -->
 		<elasticsearch.version>2.4.4</elasticsearch.version>
 		<sparkjava.version>2.5.5</sparkjava.version>
 		<asyncHttpClient.version>2.0.30</asyncHttpClient.version>
 		<rabbitmq.version>4.1.0</rabbitmq.version>
-
-		<!-- Templates -->
 
 	</properties>
 
@@ -51,13 +50,6 @@
 	</build>
 
 	<dependencies>
-
-		<dependency>
-			<groupId>com.sparkjava</groupId>
-			<artifactId>spark-template-freemarker</artifactId>
-			<version>2.5.5</version>
-		</dependency>
-
 		<!-- For unit tests -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -108,6 +100,12 @@
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>${guice.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.sparkjava</groupId>
+			<artifactId>spark-template-freemarker</artifactId>
+			<version>${spark.freemarker.version}</version>
 		</dependency>
 
 		<!-- Major projects -->

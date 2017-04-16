@@ -28,12 +28,9 @@ import com.google.inject.Inject;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.Version;
-import spark.ModelAndView;
 import spark.Request;
-import spark.Response;
 import spark.Route;
 import spark.Spark;
-import spark.template.freemarker.FreeMarkerEngine;
 
 public class RestService implements ExposedApiService {
 	private final Logger logger = LogManager.getLogger(this.getClass());
