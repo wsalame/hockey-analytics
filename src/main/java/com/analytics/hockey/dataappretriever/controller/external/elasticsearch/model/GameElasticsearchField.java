@@ -8,15 +8,6 @@ import com.analytics.hockey.dataappretriever.controller.external.elasticsearch.F
 import com.analytics.hockey.dataappretriever.model.Game;
 
 public enum GameElasticsearchField implements IsElasticsearchField<Game> {
-    // TODO add
-    // unit tests
-    // qui verifie
-    // tout
-    // les json sont differents. Un autre
-    // test qui retrieve les json de
-    // HockeyScrapper pour comparer que on a
-    // les memes
-
 	WINNER_TEAM("winner_team", FieldDatatype.RAW_STRING) {
 		@Override
 		public Object getIndexingValue(Game game) {

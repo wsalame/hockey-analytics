@@ -1,43 +1,38 @@
 package com.analytics.hockey.dataappretriever.service;
 
-import static spark.Spark.after;
+import static spark.Spark.*;
 import static spark.Spark.before;
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.path;
 
-import java.net.HttpURLConnection;
-import java.util.Collections;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.analytics.hockey.dataappretriever.exception.JsonException;
 import com.analytics.hockey.dataappretriever.main.PropertyConstant;
 import com.analytics.hockey.dataappretriever.model.DataRetriever;
 import com.analytics.hockey.dataappretriever.model.ExposedApiService;
-import com.analytics.hockey.dataappretriever.model.JsonFormatter;
 import com.analytics.hockey.dataappretriever.model.PropertyLoader;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
-import spark.Request;
-import spark.Route;
 import spark.Spark;
+
+@Singleton
 public class RestService implements ExposedApiService {
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
 	private DataRetriever dataRetriever;
-	private JsonFormatter jsonFormatter;
 	private PropertyLoader propertyLoader;
-
-	private final String MALFORMED_REQUEST_OUPUT = "Error. Have you malformed your request ?";
+	private RoutesManager routesManager;
 
 	@Inject
-	public RestService(DataRetriever dataRetriever, JsonFormatter jsonFormatter, PropertyLoader propertyLoader) {
+	public RestService(DataRetriever dataRetriever, PropertyLoader propertyLoader, RoutesManager routesManager) {
 		this.dataRetriever = dataRetriever;
-		this.jsonFormatter = jsonFormatter;
 		this.propertyLoader = propertyLoader;
+		this.routesManager = routesManager;
 	}
 
 	/**
@@ -48,45 +43,48 @@ public class RestService implements ExposedApiService {
 		Spark.ipAddress(propertyLoader.getProperty(PropertyConstant.SPARK_HOST.toString()).intern());
 		Spark.port(propertyLoader.getPropertyAsInteger(PropertyConstant.SPARK_PORT.toString()));
 
-		// TODO use websockets ?
-
 		initFaviconIcon();
+		
+		// TODO use Transformers to automate pretty pretting
 
-		before("/*", (req, res) -> {
-			logger.info("Requested route : " + req.pathInfo());
-		});
-
-		path("/api/nhl/v1", () -> {
-			/*
-			 * /api/v1/nhl/
-			 */
+		path(BASE_PREFIX_ENDPOINT + BASE_NHL_V1_ENDPOINT, () -> {
 			before((req, res) -> {
-				boolean authenticated = true;
+				boolean authenticated = true; // TODO OAuth
 				if (!authenticated) {
-					halt(401, "Please connect"); // TODO redirect to login page
+					halt(401, "Please connect");
 				}
 			});
 
 			after((req, res) -> {
 				res.type("application/json");
-//				res.status(200);
 			});
 
-			path("/teams", () -> {
-				get("", nhlTeamsBySeasonRoute);
-				get("/:season", nhlTeamsBySeasonRoute);
+			path(TEAMS_ENDPOINT, () -> {
+				get("", routesManager.get(TEAMS_ENDPOINT));
+				get("/:season", routesManager.get(TEAMS_ENDPOINT));
+				
+				post("", routesManager.get(TEAMS_ENDPOINT));
+				post("/:season", routesManager.get(TEAMS_ENDPOINT));
 			});
-			
-			path("/stats", () -> {
-				get("", nhlStatsBySeasonRoute);
-				get("/:season", nhlStatsBySeasonRoute);
-				get("/:season/:team", nhlStatsBySeasonRoute);
+
+			path(STATS_ENDPOINT, () -> {
+				get("", routesManager.get(STATS_ENDPOINT));
+				get("/:season", routesManager.get(STATS_ENDPOINT));
+				get("/:season/:team", routesManager.get(STATS_ENDPOINT));
+				
+				post("", routesManager.get(STATS_ENDPOINT));
+				post("/:season", routesManager.get(STATS_ENDPOINT));
+				post("/:season/:team", routesManager.get(STATS_ENDPOINT));
 			});
-			
-			path("/scores", () -> {
-				get("/:year", nhlScoresRoute);
-				get("/:year/:month", nhlScoresRoute);
-				get("/:year/:month/:day", nhlScoresRoute);
+
+			path(SCORES_ENDPOINT, () -> {
+				get("/:year", routesManager.get(SCORES_ENDPOINT));
+				get("/:year/:month", routesManager.get(SCORES_ENDPOINT));
+				get("/:year/:month/:day", routesManager.get(SCORES_ENDPOINT));
+				
+				post("/:year", routesManager.get(SCORES_ENDPOINT));
+				post("/:year/:month", routesManager.get(SCORES_ENDPOINT));
+				post("/:year/:month/:day", routesManager.get(SCORES_ENDPOINT));
 			});
 		});
 	}
@@ -119,80 +117,30 @@ public class RestService implements ExposedApiService {
 			return "";
 		});
 	}
-	
-	Route nhlScoresRoute = (request, response) -> {
-		try {
-			Integer year = request.params(":month") != null ? Integer.parseInt(request.params(":year")) : null;
-			Integer month = request.params(":month") != null ? Integer.parseInt(request.params(":month")) : null;
-			Integer day = request.params(":day") != null ? Integer.parseInt(request.params(":day")) : null;
-			
-			String scores = dataRetriever.getScores(year, month, day, Collections.emptyMap());
-//			String teamNames = getTeamNames(request.params(":season"));
-			response.status(200);
-			response.type("application/json");
 
-			return outputPrettyIfNecessary(request, scores);
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
-			response.status(HttpURLConnection.HTTP_BAD_REQUEST);
-			return MALFORMED_REQUEST_OUPUT;
-		}
-	};
-	
-	Route nhlStatsBySeasonRoute = (request, response) -> {
-		try {
-			String stats = dataRetriever.getStats(request.params(":season"), request.params(":team"), Collections.emptyMap());
-//			String teamNames = getTeamNames(request.params(":season"));
-			response.status(200);
-			response.type("application/json");
-
-			return outputPrettyIfNecessary(request, stats);
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
-			response.status(HttpURLConnection.HTTP_BAD_REQUEST);
-			return MALFORMED_REQUEST_OUPUT;
-		}
-	};
-
-	Route nhlTeamsBySeasonRoute = (request, response) -> {
-		try {
-			String teamNames = getTeamNames(request.params(":season"));
-			response.status(200);
-			response.type("application/json");
-
-			return outputPrettyIfNecessary(request, teamNames);
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
-			response.status(HttpURLConnection.HTTP_BAD_REQUEST);
-			return MALFORMED_REQUEST_OUPUT;
-		}
-	};
-
-	private String outputPrettyIfNecessary(Request request, String output) throws JsonException {
-		return request.queryParams("pretty") == null ? output : jsonFormatter.toPrettyJson(output, 2);
+	@Override
+	public String getTeams(String season, Map<String, Object> params) throws Exception {
+		return dataRetriever.getTeams(season, params);
 	}
 
-	/**
-	 * @inheritDoc
-	 */
 	@Override
-	public String getTeamNames(String season) throws Exception {
-		return dataRetriever.getTeams(season, Collections.emptyMap());
+	public String getScores(String index, String type, Integer year, Integer month, Integer day,
+	        Map<String, Object> params) throws Exception {
+		return dataRetriever.getScores(year, month, day, params);
 	}
 
-	/**
-	 * @inheritDoc
-	 */
 	@Override
-	public String getTotalGoals(String season, String team, Map<String, Object> params) throws Exception {
-		return null;
+	public String getScores(Integer year, Integer month, Integer day, Map<String, Object> params) throws Exception {
+		return dataRetriever.getScores(year, month, day, params);
 	}
 
-	/**
-	 * @inheritDoc
-	 */
 	@Override
-	public String getTotalPoints(String season, String team, Map<String, Object> params) throws Exception {
-		return null;
+	public String getStats(String season, String team, Map<String, Object> params) throws Exception {
+		return dataRetriever.getStats(season, team, params);
+	}
+
+	@Override
+	public String getStandings(String season, String team, Map<String, Object> params) throws Exception {
+		return dataRetriever.getStandings(season, team, params);
 	}
 }

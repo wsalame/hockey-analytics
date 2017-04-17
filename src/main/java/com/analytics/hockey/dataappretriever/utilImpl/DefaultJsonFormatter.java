@@ -1,10 +1,12 @@
 package com.analytics.hockey.dataappretriever.utilImpl;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.analytics.hockey.dataappretriever.exception.JsonException;
 import com.analytics.hockey.dataappretriever.model.JsonFormatter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -54,5 +56,15 @@ public class DefaultJsonFormatter implements JsonFormatter {
 
 	private boolean isInEnveloppe(String json) {
 		return json.startsWith("[") && json.endsWith("]");
+	}
+
+	@Override
+	public Map<String, Object> toMap(String json) throws JsonException {
+		try {
+			return defaultMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+			});
+		} catch (IOException e) {
+			throw new JsonException(e.toString(), e);
+		}
 	}
 }

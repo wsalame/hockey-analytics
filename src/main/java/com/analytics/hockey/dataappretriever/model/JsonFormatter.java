@@ -1,5 +1,7 @@
 package com.analytics.hockey.dataappretriever.model;
 
+import java.util.Map;
+
 import com.analytics.hockey.dataappretriever.exception.JsonException;
 import com.analytics.hockey.dataappretriever.utilImpl.DefaultJsonFormatter;
 import com.google.inject.ImplementedBy;
@@ -36,4 +38,17 @@ public interface JsonFormatter {
 	 *             If any error occured during the serialization
 	 */
 	String toPrettyJson(String json, int indent) throws JsonException;
+
+	/**
+	 * Transform a valid JSON into it's equivalent object in form of a map. If an
+	 * attribute is made of another object, there will be nested maps. They name of the
+	 * attribute will be key in the map.
+	 * 
+	 * @param json
+	 *            JSON to transform
+	 * @return A map containing the values from the original JSON i
+	 * @throws JsonException
+	 *             If any error occured during the deserialization
+	 */
+	Map<String, Object> toMap(String json) throws JsonException;
 }

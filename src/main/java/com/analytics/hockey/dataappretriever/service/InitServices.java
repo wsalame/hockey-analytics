@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -32,8 +31,6 @@ import com.analytics.hockey.dataappretriever.model.MessageConsumer;
 import com.analytics.hockey.dataappretriever.model.OnMessageConsumption;
 import com.analytics.hockey.dataappretriever.model.PropertyLoader;
 import com.analytics.hockey.dataappretriever.model.Team;
-import com.analytics.hockey.dataappretriever.service.http.AsyncHttpCallWrapper;
-import com.analytics.hockey.dataappretriever.service.http.HttpVerb;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -60,8 +57,6 @@ public class InitServices {
 		List<IsConnected> services = Lists.newArrayList(this.dataRetriever, this.dataIndexer, this.messageConsumer,
 		        this.hockeyScrapper);
 
-		// List<IsConnected> services = Lists.newArrayList(this.dataRetriever);
-
 		List<IsConnected> failedServices = Collections.synchronizedList(new ArrayList<IsConnected>());
 		ExecutorService executor = Executors.newFixedThreadPool(Math.min(4, services.size()));
 
@@ -86,26 +81,7 @@ public class InitServices {
 				initConsummation();
 
 				this.exposedApiService.start();
-				logger.info("Starting API....");
 				this.exposedApiService.awaitInitialization();
-
-				// ObjectMapper mapper = new ObjectMapper();
-				// String jsonbody =
-				// "{\"size\":0,\"fields\":[\"wins\",\"pts\",\"gf\"],\"range\":{\"start\":1166023777000,\"end\":1492083539000,\"format\":\"epoch_millis\"},\"sort\":{\"wins\":\"desc\"}}";
-				//
-				// // String json =
-				// //
-				// "{\"size\":5,\"range\":{\"start\":1166023777000,\"end\":1492083539000,\"format\":\"epoch\"},\"sort\":{\"wins\":\"asc\",\"points\":\"desc\",\"gf\":\"desc\"}}";
-				//
-				// Map<String, Object> map = new HashMap<>();
-				//
-				// // convert JSON string to Map
-				// map = mapper.readValue(jsonbody, new TypeReference<Map<String,
-				// Object>>() {
-				// });
-				//
-//				 String statsWins = dataRetriever.getStats("2006-2007", "Montreal Canadiens", Collections.emptyMap());
-//				 System.out.println(statsWins);
 			} else {
 				throwCouldNotStartServices(failedServices);
 			}
@@ -116,8 +92,8 @@ public class InitServices {
 	}
 
 	private void initConsummation() throws IOException, DataStoreException {
-//		consumeTeams();
-//		consumeGames();
+		consumeTeams();
+		consumeGames();
 	}
 
 	private void throwCouldNotStartServices(List<IsConnected> failedServices) {
@@ -138,7 +114,6 @@ public class InitServices {
 			public Void execute(byte[] body, Object... args) throws Exception {
 				String message = new String(body, "UTF-8");
 				logger.info(message);
-				System.out.println(message);
 				HockeyScrapperUtils.unmarshallGames(message).parallelStream().forEach(game -> safeInsertGame(game));
 				return null;
 			}
@@ -160,9 +135,7 @@ public class InitServices {
 			@Override
 			public Void execute(byte[] body, Object... args) throws Exception {
 				String message = new String(body, "UTF-8");
-				// writeToFile(message);
 				logger.info(message);
-				System.out.println(message);
 
 				List<Object> responseList = HockeyScrapperUtils.responseToList(message);
 				safeIndexTeams(responseList);
@@ -175,13 +148,6 @@ public class InitServices {
 //		 HttpVerb.GET).build());
 	}
 
-	private Map<String, Team> mappingNames = new HashMap<>();
-
-	private void addNames(Team team) {
-		mappingNames.put(team.getCurrentName(), team);
-		team.getPastNames().stream().forEach(previousTeamName -> mappingNames.put(previousTeamName, team));
-	}
-
 	@SuppressWarnings("unchecked")
 	private void safeIndexTeams(List<Object> responseList) {
 		try {
@@ -191,7 +157,6 @@ public class InitServices {
 				List<String> pastNames = (ArrayList<String>) responseMap
 				        .get(TeamElasticsearchField.PAST_NAMES.getJsonFieldName());
 				Team team = new Team(currentName, pastNames);
-				addNames(team);
 				dataIndexer.indexDocument(team);
 			}
 		} catch (Exception e) {

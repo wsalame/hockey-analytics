@@ -24,6 +24,14 @@ public class CustomBoolQueryBuilder extends BoolQueryBuilder {
 
 	public CustomBoolQueryBuilder rangeIfRequired(RangeParameter range) {
 		if (range != null) {
+			this.filter(rangeQuery(range));
+		}
+
+		return this;
+	}
+	
+	public static RangeQueryBuilder rangeQuery(RangeParameter range){
+		if (range != null) {
 			RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(GameElasticsearchField.DATE.getJsonFieldName());
 
 			// It doesn't matter if the returned value from Range#getStart() is NULL.
@@ -40,10 +48,10 @@ public class CustomBoolQueryBuilder extends BoolQueryBuilder {
 				rangeQuery.format(range.getFormat());
 			}
 
-			this.filter(rangeQuery);
+			return rangeQuery;
 		}
-
-		return this;
+		
+		return null;
 	}
 
 	public CustomBoolQueryBuilder filterTeam(String team) {

@@ -52,9 +52,9 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		this.propertyLoader = propertyLoader;
 		this.MAX_WINDOW_SIZE = propertyLoader.getPropertyAsInteger(PropertyConstant.ES_MAX_WINDOW_SIZE.toString());
 	}
-	
+
 	@VisibleForTesting
-	ElasticsearchReadController(){
+	ElasticsearchReadController() {
 		this.statsLoader = null;
 		this.MAX_WINDOW_SIZE = -1;
 	}
@@ -66,7 +66,6 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 	public String getTeams(String season, Map<String, Object> params) throws DataStoreException {
 		List<String> teams = new ArrayList<>();
 		QueryParameters queryParameters = QueryParameters.toQueryParameters(params);
-		BoolQueryBuilder qb = CustomBoolQueryBuilder.boolQueryBuilder().rangeIfRequired(queryParameters.getRange());
 
 		// If it's for a defined season, return the exact names for given season. The
 		// returned name will be the "current" name for the given season. For example, in
@@ -75,6 +74,8 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 			TermsBuilder agg = AggregationBuilders.terms("unique_teams")
 			        .field(GameElasticsearchField.HOME_TEAM.getJsonFieldName())
 			        .size(Optional.ofNullable(queryParameters.getSize()).orElse(statsLoader.getNumberOfTeams()));
+
+			BoolQueryBuilder qb = CustomBoolQueryBuilder.boolQueryBuilder().rangeIfRequired(queryParameters.getRange());
 
 			SearchRequestBuilder fullQuery = getClient().prepareSearch(season).addAggregation(agg).setQuery(qb);
 
@@ -90,13 +91,14 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		} else {
 			// Otherwise return all time names, where an object will have both the current
 			// name and the past names
-			SearchRequestBuilder fullQuery = getClient().prepareSearch(new Team().buildIndex()).setQuery(qb)
+			SearchRequestBuilder fullQuery = getClient().prepareSearch(new Team().buildIndex()).setQuery(QueryBuilders.matchAllQuery())
 			        .setSize(Optional.ofNullable(queryParameters.getSize()).orElse(statsLoader.getNumberOfTeams()));
 
 			SearchResponse response = executeActionGet(fullQuery);
 
 			int estimatedTotalCapacity = statsLoader.getAverageTeamDocumentCharacters()
 			        * statsLoader.getNumberOfTeams();
+			
 			return joinSourceHits(response, separator, estimatedTotalCapacity);
 		}
 	}
@@ -104,46 +106,46 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 	private int getSizeOrDefault(QueryParameters queryParameters, int defaultSize) {
 		return Optional.ofNullable(queryParameters.getSize()).orElse(defaultSize);
 	}
-	
+
 	/**
 	 * @inheritDoc
 	 */
 	@Override
-	public String getScores(Integer year, Integer month, Integer day, Map<String, Object> params) throws DataStoreException {
+	public String getScores(Integer year, Integer month, Integer day, Map<String, Object> params)
+	        throws DataStoreException {
 		final String index = new Game().buildGamesIndex(year, month);
 		final String type = new Game().buildType(month);
-		
+
 		return getScores(index, type, year, month, day, params);
 	}
-	
+
 	/**
 	 * @inheritDoc
 	 */
 	@Override
-	public String getScores(String index, String type, Integer year, Integer month, Integer day, Map<String, Object> params)
-	        throws DataStoreException {
+	public String getScores(String index, String type, Integer year, Integer month, Integer day,
+	        Map<String, Object> params) throws DataStoreException {
 		QueryParameters queryParameters = QueryParameters.toQueryParameters(params);
 
 		SearchResponse response = getClient().prepareSearch(index).setTypes(type)
 		        .setSize(getSizeOrDefault(queryParameters, MAX_WINDOW_SIZE)).setQuery(QueryBuilders.matchAllQuery())
 		        .execute().actionGet();
-		
-		return joinSourceHits(response, separator, estimateTotalCapacity(year, month, day));
+
+		return joinSourceHits(response, separator,
+		        Optional.ofNullable(estimateTotalCapacity(year, month, day)).orElse(16));
 	}
-	
+
 	/**
 	 * @see {@link HasDataStatistics}
 	 */
-	private int estimateTotalCapacity(Integer year, Integer month, Integer day){
-		int estimatedTotalCapacity;
+	private Integer estimateTotalCapacity(Integer year, Integer month, Integer day) {
+		Integer estimatedTotalCapacity = null;
 		if (month != null && day != null) {
 			estimatedTotalCapacity = statsLoader
 			        .getAverageNumberOfGamesForGivenDay(LocalDate.of(year, month, day).getDayOfWeek().ordinal())
 			        * statsLoader.getAverageGameDocumentCharacters();
-		} else {
-			estimatedTotalCapacity = 5000; // TODO
 		}
-		
+
 		return estimatedTotalCapacity;
 	}
 
