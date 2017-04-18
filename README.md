@@ -33,6 +33,18 @@ You'll need to add argument `-Dlog4j.configurationFile=src/main/resources/log4j2
 
 Project is using default host and ports of above dependencies. Edit config file `src/main/resources/config.properties` if any setting was changed.
 
+When started, you should see
+
+```
+DefaultHockeyScrapperController was started
+RabbitMqConsumerController was started
+ElasticsearchReadController was started
+ElasticsearchWriteController was started
+Consumer tag received for queue teams : amq.ctag-qUoLt4SXR3-Lud_QsAl0Qw
+Consumer tag received for queue games : amq.ctag-Hs_5bu0OdXQAZb3tLHXjLQ
+Spark is ready on localhost:4567
+```
+
 #### Python scrapper (ScrapperHockey)
 
 ```
@@ -40,8 +52,9 @@ $ cd ScrapperHockey
 $ python webapp.py
 ```
 
-1. Scrap the teams `curl -XGET http://localhost:8989/nhl/v1/teams`
-2. Scrap the season (between 2005-2006 and 2016-2017) you're interested in `curl -XGET http://localhost:8989/nhl/v1/season/2005-2006`
+1. Scrap the teams <br/>`curl -XGET http://localhost:8989/nhl/v1/teams`
+2. Scrap the season (between 2005-2006 and 2016-2017) you're interested in <br/>
+  `curl -XGET http://localhost:8989/nhl/v1/season/2005-2006`
 
 You can open as many instance of python webapp as you want, to distribute the load. Whenever a game is scrapped, it is sent to a messaging queue. See Architecture section below.
 ### 
@@ -136,7 +149,7 @@ Answer:
 }
 ```
 
-Let's request all time teams. For brevity, we want info on only 2 teams.
+Let's request all time teams names. For brevity, we want info on only 2 teams.
 
 ```
 curl -XGET 'http://localhost:4567/nhl/v1/teams?pretty=2
@@ -175,7 +188,7 @@ curl -XGET 'http://localhost:4567/nhl/v1/stats/2005-2006/Montreal%20Canadiens?pr
     "end": 1140225017000,
     "format": "epoch_millis"
   },
-  "fields":[ "w", "gf", "pts" ],
+  "fields":[ "gf", "pts" ],
   "sort":{  
     "pts":"desc"
   },
