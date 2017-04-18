@@ -149,9 +149,6 @@ public class ElasticsearchReadController extends AbstractElasticsearchReadContro
 		return estimatedTotalCapacity;
 	}
 
-	// TODO good edge case season 2005 de 1 oct a 15 oct pour Nashville. ca doit donner
-	// 20, mais ca donnais 16 a cause que le endDate etait considere comme less au lieu de
-	// less than equal. Probleme du a une mauvaise indexation ?
 	public int getTotalGoals(String season, String team, Map<String, Object> params) throws DataStoreException {
 		String totalGoalsFieldName = "totalGoals";
 		String winnerGoalsAggName = "winnerGoalsAgg";

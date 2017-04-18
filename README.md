@@ -14,7 +14,7 @@ Because of the major rule change after the 2004 lockout regarding giving a point
 
 ## Installation
 
-#### Prerequiste and dependencies external to the main webapp
+### Prerequiste and dependencies external to the main webapp
 
 - [Python](https://www.python.org/download/releases/2.7/)  2.7.x (tested on 2.7.3)
   - [Flask](http://flask.pocoo.org/) 0.12 (tested on 0.12)
@@ -22,15 +22,30 @@ Because of the major rule change after the 2004 lockout regarding giving a point
 - [RabbitMQ](https://github.com/rabbitmq/rabbitmq-server/releases/tag/rabbitmq_v3_6_8) 3.6.x (tested on 3.6.8)
 - [Elasticsearch](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-0)  2.x (tested on 2.4.0)
 
+#### Starting the main Java webapp (HockeyAnalytics)
 Compile maven project (main webapp dependencies will be automatically downloaded):
 
 `mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B –V`
 
 or just import the project into an IDE like Eclipse, and run it from there.
 
+You'll need to add argument `-Dlog4j.configurationFile=src/main/resources/log4j2.properties` for logging to pick up.
+
 Project is using default host and ports of above dependencies. Edit config file `src/main/resources/config.properties` if any setting was changed.
 
-[Insert instructions regarding scrapping the scores]
+#### Python scrapper (ScrapperHockey)
+
+```
+$ cd ScrapperHockey
+$ python webapp.py
+```
+
+1. Scrap the teams `curl -XGET http://localhost:8989/nhl/v1/teams`
+2. Scrap the season (between 2005-2006 and 2016-2017) you're interested in `curl -XGET http://localhost:8989/nhl/v1/season/2005-2006`
+
+You can open as many instance of python webapp as you want, to distribute the load. Whenever a game is scrapped, it is sent to a messaging queue. See Architecture section below.
+### 
+
 
 ## Usage
 
@@ -85,7 +100,7 @@ You will need a client that supports sending `GET` request with a body. If you d
 
 Let's insert scores for a given day. No need to specify the season. It is implied from the date.
 ```
-curl -XPOST 'http://localhost:4567/nhl/v1/scores?pretty=true' 
+curl -XPOST 'http://localhost:4567/nhl/v1/scores?pretty=2' 
 {  
   "day":9,
   "month":10,
@@ -124,7 +139,7 @@ Answer:
 Let's request all time teams. For brevity, we want info on only 2 teams.
 
 ```
-curl -XGET 'http://localhost:4567/nhl/v1/teams?pretty=true
+curl -XGET 'http://localhost:4567/nhl/v1/teams?pretty=2
 {  
   "size":2
 }
@@ -150,10 +165,10 @@ Answer:
 ]
 ```
 
-Let's request the top 5 teams whose Montreal got the most points of against, between October 18 2005 and February 18 2006.
+Let's request the top 5 teams from whom Montreal got the most points, between October 18 2005 and February 18 2006.
 
 ```
-curl -XGET 'http://localhost:4567/nhl/v1/stats/2005-2006/Montreal%20Canadiens?pretty=true'
+curl -XGET 'http://localhost:4567/nhl/v1/stats/2005-2006/Montreal%20Canadiens?pretty=2'
 {  
   "range":{
     "start": 1129597817000,

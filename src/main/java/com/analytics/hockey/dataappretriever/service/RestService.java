@@ -45,7 +45,7 @@ public class RestService implements ExposedApiService {
 
 		initFaviconIcon();
 		
-		// TODO use Transformers to automate pretty pretting
+		// TODO use Transformers to automate pretty printing
 
 		path(BASE_PREFIX_ENDPOINT + BASE_NHL_V1_ENDPOINT, () -> {
 			before((req, res) -> {
@@ -109,7 +109,6 @@ public class RestService implements ExposedApiService {
 	public void awaitInitialization() {
 		Spark.awaitInitialization();
 		logger.info("Spark is ready on localhost:" + Spark.port());
-		System.out.println("Spark is ready on localhost:" + Spark.port());
 	}
 
 	private void initFaviconIcon() {

@@ -118,12 +118,6 @@ public class InitServices {
 				return null;
 			}
 		});
-
-//		String url = "http://localhost:8989/nhl/v1/season/2005-2006";
-//		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
-//
-//		String url = "http://localhost:8989/nhl/v1/season/2006-2007";
-//		hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url, HttpVerb.GET).build());
 	}
 
 	private void consumeTeams() throws IOException, DataStoreException {
@@ -142,10 +136,6 @@ public class InitServices {
 				return null;
 			}
 		});
-
-//		 String url = "http://localhost:8989/nhl/v1/teams";
-//		 hockeyScrapper.sendHttpRequest(new AsyncHttpCallWrapper.Builder(url,
-//		 HttpVerb.GET).build());
 	}
 
 	@SuppressWarnings("unchecked")
