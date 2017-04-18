@@ -6,7 +6,7 @@ There are still some bugs, and some classes do not have tests yet, but everythin
 
 This is a work in progress. As of now, you won't get any cool info out of the API, but you can still check out my (hopefully) awesome code.
 
-Because of the major rule change after the 2004 lockout regarding giving a point to the losing team in overtime/shootout, it was decided the app would be compatible only for the seasons following the lockout which 2005-2006.
+Because of the major rule change after the 2004 lockout regarding giving a point to the losing team in overtime/shootout, it was decided the app would be compatible only for the seasons following the lockout, 2005-2006 being the first one.
 
 [INSERT LINK TO JAVADOC]
 
@@ -22,8 +22,8 @@ Because of the major rule change after the 2004 lockout regarding giving a point
 - [RabbitMQ](https://github.com/rabbitmq/rabbitmq-server/releases/tag/rabbitmq_v3_6_8) 3.6.x (tested on 3.6.8)
 - [Elasticsearch](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-0)  2.x (tested on 2.4.0)
 
-#### Starting the main Java webapp (HockeyAnalytics)
-Compile maven project (main webapp dependencies will be automatically downloaded):
+#### Starting the main webapp & HTTP server (HockeyAnalytics)
+Compile maven project (dependencies will be automatically downloaded):
 
 `mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B –V`
 
@@ -56,7 +56,7 @@ $ python webapp.py
 2. Scrap the season (between 2005-2006 and 2016-2017) you're interested in <br/>
   `curl -XGET http://localhost:8989/nhl/v1/season/2005-2006`
 
-You can open as many instance of python webapp as you want, to distribute the load. Whenever a game is scrapped, it is sent to a messaging queue. See Architecture section below.
+You can open as many instance of python webapp as you want, to distribute the load. Whenever a game is scrapped, it is sent to a messaging queue. See [Architecture](#architecture) section below.
 ### 
 
 
@@ -246,14 +246,17 @@ Answer:
 
 ## Architecture
 
-[insert actual architecture]
+The current architecture is very simplistic, has a lot of possible bottlenecks and failure points... but one step at the time
 
-[insert future architecture]
+![current architecture](https://cloud.githubusercontent.com/assets/8709555/25156640/d3bd4530-2469-11e7-8703-0adcd6af6157.png)
 
+Instead, we want a nice scalable architecture. This is what it look like in the future
 
+![upcoming architecture](https://cloud.githubusercontent.com/assets/8709555/25156641/d3be62da-2469-11e7-854c-379b8fb5d481.png)
 
 ## Upcoming improvements
 
+* Publish app on maven repo (Sonatype)
 * Add integration tests
 * Add missing unit tests
 * Add load balancers
