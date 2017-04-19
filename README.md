@@ -8,13 +8,47 @@ This is a work in progress. As of now, you won't get any cool info out of the AP
 
 Because of the major rule change after the 2004 lockout regarding giving a point to the losing team in overtime/shootout, it was decided the app would be compatible only for the seasons following the lockout, 2005-2006 being the first one.
 
-[INSERT LINK TO JAVADOC]
-
-[Insert table of content]
+<p>
+<div class="toc">
+      <ul>
+        <li>
+          <a href="#installation">Installation</a>
+          <ul>
+            <li>
+              <a href="#prerequisite-and-dependencies-external-to-the-main-webapp">Prerequisite and dependencies</a>
+              <ul>
+                <li><a href="#starting-the-main-webapp-http-server-hockeyanalytics">Starting the main webapp &amp; HTTP server (HockeyAnalytics)</a></li>
+                <li><a href="#python-scrapper-scrapperhockey">Python scrapper (ScrapperHockey)</a></li>
+              </ul>
+            </li>
+            <li><a href="#title"> </a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#usage">Usage</a>
+          <ul>
+            <li>
+              <a href="#rest-api-description">REST API description</a>
+              <ul>
+                <li><a href="#implemented-endpoints">Implemented endpoints</a></li>
+                <li><a href="#non-implemented-endpoints-upcoming-soon">Non-implemented endpoints</a></li>
+                <li><a href="#fields-description">Fields description</a></li>
+              </ul>
+            </li>
+            <li><a href="#calling-the-api">Calling the API</a></li>
+          </ul>
+        </li>
+        <li><a href="#known-bugs-and-possible-issues">Known bugs and possible issues</a></li>
+        <li><a href="#tech-stack">Tech stack</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#upcoming-improvements">Upcoming improvements</a></li>
+      </ul>
+</div>
+</p>
 
 ## Installation
 
-### Prerequiste and dependencies external to the main webapp
+### Prerequisite and dependencies external to the main webapp
 
 - [Python](https://www.python.org/download/releases/2.7/)  2.7.x (tested on 2.7.3)
   - [Flask](http://flask.pocoo.org/) 0.12 (tested on 0.12)
@@ -29,7 +63,7 @@ Compile maven project (dependencies will be automatically downloaded):
 
 or just import the project into an IDE like Eclipse, and run it from there.
 
-You'll need to add argument `-Dlog4j.configurationFile=src/main/resources/log4j2.properties` for logging to pick up.
+You'll need to add VM argument `-Dlog4j.configurationFile=src/main/resources/log4j2.properties` for logging to pick up.
 
 Project is using default host and ports of above dependencies. Edit config file `src/main/resources/config.properties` if any setting was changed.
 
@@ -250,7 +284,7 @@ The current architecture is very simplistic, has a lot of possible bottlenecks a
 
 ![current architecture](https://cloud.githubusercontent.com/assets/8709555/25156640/d3bd4530-2469-11e7-8703-0adcd6af6157.png)
 
-Instead, we want a nice scalable architecture. This is what it look like in the future
+Instead, we want a nice scalable architecture. This is roughly what it will look like in the future
 
 ![upcoming architecture](https://cloud.githubusercontent.com/assets/8709555/25156641/d3be62da-2469-11e7-854c-379b8fb5d481.png)
 
