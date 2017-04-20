@@ -21,7 +21,6 @@ Because of the major rule change after the 2004 lockout regarding giving a point
                 <li><a href="#python-scrapper-scrapperhockey">Python scrapper (ScrapperHockey)</a></li>
               </ul>
             </li>
-            <li><a href="#title"> </a></li>
           </ul>
         </li>
         <li>
